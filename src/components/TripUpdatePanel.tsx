@@ -1,0 +1,241 @@
+import React, { useState } from 'react';
+import { X, Upload } from 'lucide-react';
+import { Trip, TripUpdate, UpdateCategory } from '../types/database';
+import { updateCategoryLabels } from '../constants/updateCategories';
+import { supabase } from '../lib/supabase';
+import { uploadImage } from '../utils/storage';
+import toast from 'react-hot-toast';
+
+interface TripUpdatePanelProps {
+  trip: Trip | Trip[];
+  onClose: () => void;
+  onUpdateCreated?: (update: TripUpdate) => void;
+}
+
+export function TripUpdatePanel({ trip, onClose, onUpdateCreated }: TripUpdatePanelProps) {
+  const [category, setCategory] = useState<UpdateCategory>('INICIO_RUTA');
+  const [notes, setNotes] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile && droppedFile.type.startsWith('image/')) {
+      setFile(droppedFile);
+      const reader = new FileReader();
+      reader.onload = (e) => setPreview(e.target?.result as string);
+      reader.readAsDataURL(droppedFile);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile && selectedFile.type.startsWith('image/')) {
+      setFile(selectedFile);
+      const reader = new FileReader();
+      reader.onload = (e) => setPreview(e.target?.result as string);
+      reader.readAsDataURL(selectedFile);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const trips = Array.isArray(trip) ? trip : [trip];
+      const updates = [];
+
+      // Upload image once if provided
+      const imageUrl = file ? await uploadImage(file) : null;
+
+      // Create updates for all selected trips
+      for (const t of trips) {
+        const { data, error } = await supabase
+          .from('trip_updates')
+          .insert({
+            trip_id: t.id,
+            category,
+            notes,
+            image_url: imageUrl
+          })
+          .select('*, updated_by')
+          .single();
+
+        if (error) throw error;
+        if (data) updates.push(data as TripUpdate);
+      }
+
+      updates.forEach(update => {
+        if (onUpdateCreated) {
+          onUpdateCreated(update);
+        }
+      });
+
+      const message = trips.length > 1 
+        ? `Actualización registrada para ${trips.length} viajes` 
+        : 'Actualización registrada exitosamente';
+      
+      toast.success(message);
+      onClose();
+    } catch (error) {
+      console.error('Error al crear actualización:', error);
+      toast.error('Error al registrar la actualización');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-y-0 right-0 w-[400px] bg-white shadow-2xl z-50 border-l">
+      <div className="h-full flex flex-col">
+        <div className="px-6 py-4 border-b bg-gray-50">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-gray-900">Nueva Actualización</h2>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          {Array.isArray(trip) && (
+            <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Actualización masiva
+                  </h3>
+                  <div className="mt-2 text-sm text-yellow-700">
+                    <p>
+                      Estás por actualizar <strong>{trip.length} viajes</strong> simultáneamente. 
+                      Esta acción no se puede deshacer.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-6">
+            {!Array.isArray(trip) && (
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h3 className="text-sm font-medium text-blue-900 mb-2">
+                  Viaje #{trip.trip_id}
+                </h3>
+                <div className="space-y-1">
+                  <p className="text-sm text-blue-700">
+                    <span className="font-medium">Conductor:</span> {trip.driver_name}
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    <span className="font-medium">Destino:</span> {trip.destination}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Categoría
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as UpdateCategory)}
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white"
+                >
+                  {Object.entries(updateCategoryLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Notas
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={4}
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none px-3 py-2"
+                  placeholder="Describe la situación..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Imagen (opcional)
+                </label>
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleDrop}
+                  className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-blue-500 transition-colors bg-gray-50"
+                >
+                  <div className="space-y-1 text-center">
+                    {preview ? (
+                      <div className="relative">
+                        <img
+                          src={preview}
+                          alt="Preview"
+                          className="mx-auto h-32 w-auto rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFile(null);
+                            setPreview(null);
+                          }}
+                          className="absolute -top-2 -right-2 p-1 bg-red-100 rounded-full text-red-600 hover:bg-red-200"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                        <div className="flex text-sm text-gray-600">
+                          <label className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500">
+                            <span>Subir archivo</span>
+                            <input
+                              type="file"
+                              className="sr-only"
+                              accept="image/*"
+                              onChange={handleFileChange}
+                            />
+                          </label>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          Arrastra y suelta una imagen aquí
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting || !notes.trim()}
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSubmitting ? 'Guardando...' : 'Guardar Actualización'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
