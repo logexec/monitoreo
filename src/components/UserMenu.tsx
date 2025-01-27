@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { LogOut, User } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import toast from 'react-hot-toast';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState } from "react";
+import { LogOut, User } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import toast from "react-hot-toast";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 interface UserMenuProps {
   email: string;
@@ -19,24 +19,24 @@ export function UserMenu({ email, onSignOut }: UserMenuProps) {
   const handleSignOut = async () => {
     try {
       setIsOpen(false);
-      
+
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
+
       // Clear the session from context
       clearSession();
-      
+
       // Call the onSignOut callback from props
       onSignOut();
-      
+
       // Navigate to home page and force a reload
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
       setTimeout(() => window.location.reload(), 100);
-      
-      toast.success('Sesión cerrada exitosamente');
+
+      toast.success("Sesión cerrada exitosamente");
     } catch (error) {
-      console.error('Sign out error:', error);
-      toast.error('Error al cerrar sesión');
+      console.error("Sign out error:", error);
+      toast.error("Error al cerrar sesión");
     }
   };
 
@@ -44,7 +44,7 @@ export function UserMenu({ email, onSignOut }: UserMenuProps) {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
+        className="flex items-center space-x-2 text-sm text-gray-200 hover:text-gray-400"
       >
         <User className="h-5 w-5" />
         <span className="hidden md:inline">{email}</span>

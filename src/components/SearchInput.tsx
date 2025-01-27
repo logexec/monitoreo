@@ -1,5 +1,4 @@
-import React from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X } from "lucide-react";
 
 interface SearchInputProps {
   value: string;
@@ -7,7 +6,11 @@ interface SearchInputProps {
   placeholder?: string;
 }
 
-export function SearchInput({ value, onChange, placeholder = "Buscar..." }: SearchInputProps) {
+export function SearchInput({
+  value,
+  onChange,
+  placeholder = "Buscar...",
+}: SearchInputProps) {
   return (
     <div className="relative flex-1">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -20,7 +23,7 @@ export function SearchInput({ value, onChange, placeholder = "Buscar..." }: Sear
       />
       {value && (
         <button
-          onClick={() => onChange('')}
+          onClick={() => onChange("")}
           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
         >
           <X className="h-4 w-4" />

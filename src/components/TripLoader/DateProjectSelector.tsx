@@ -1,5 +1,5 @@
-import React from 'react';
-import { format } from 'date-fns';
+import React from "react";
+import { format } from "date-fns";
 
 interface DateProjectSelectorProps {
   date: string;
@@ -12,14 +12,15 @@ interface DateProjectSelectorProps {
 
 export function DateProjectSelector({
   date,
-  projects,
   selectedProjects,
   onDateChange,
   onProjectChange,
-  availableProjects
+  availableProjects,
 }: DateProjectSelectorProps) {
   const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const options = Array.from(e.target.selectedOptions).map(option => option.value);
+    const options = Array.from(e.target.selectedOptions).map(
+      (option) => option.value
+    );
     onProjectChange(options);
   };
 
@@ -49,7 +50,7 @@ export function DateProjectSelector({
           size={5}
         >
           <option value="all">Todos los Proyectos</option>
-          {availableProjects.map(project => (
+          {availableProjects.map((project) => (
             <option key={project} value={project}>
               {project}
             </option>
@@ -58,10 +59,10 @@ export function DateProjectSelector({
       </div>
 
       <p className="text-sm text-gray-500">
-        {selectedProjects.includes('all') 
-          ? 'Todos los proyectos seleccionados' 
-          : `${selectedProjects.length} proyecto(s) seleccionado(s)`
-        } para {format(new Date(date), 'dd/MM/yyyy')}
+        {selectedProjects.includes("all")
+          ? "Todos los proyectos seleccionados"
+          : `${selectedProjects.length} proyecto(s) seleccionado(s)`}{" "}
+        para {format(new Date(date), "dd/MM/yyyy")}
       </p>
     </div>
   );
