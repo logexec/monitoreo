@@ -5,6 +5,7 @@ import { updateCategoryLabels } from "../constants/updateCategories";
 import { supabase } from "../lib/supabase";
 import { uploadImage } from "../utils/storage";
 import toast from "react-hot-toast";
+import { motion } from "motion/react";
 
 interface TripUpdatePanelProps {
   trip: Trip | Trip[];
@@ -94,7 +95,12 @@ export function TripUpdatePanel({
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[500px] bg-white dark:bg-black shadow-2xl z-50 border-l">
+    <motion.div
+      initial={{ right: -100, opacity: 0 }}
+      animate={{ right: 0, opacity: 1 }}
+      transition={{ duration: 0.25 }}
+      className="fixed inset-y-0 right-0 w-[500px] bg-white dark:bg-black shadow-2xl z-50 border-l"
+    >
       <div className="h-full flex flex-col">
         <div className="px-6 py-2 border-b bg-gray-200 dark:bg-gray-800">
           <div className="flex items-center justify-between mb-2">
@@ -257,6 +263,6 @@ export function TripUpdatePanel({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
