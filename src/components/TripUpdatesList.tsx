@@ -53,7 +53,7 @@ export function TripUpdatesList({ updates }: TripUpdatesListProps) {
         return (
           <div key={update.id} className="relative pl-16">
             <div
-              className={`absolute left-7 -translate-x-1/2 w-3 h-3 rounded-full ${bg} border-2 border-white dark:border-black`}
+              className={`absolute left-[33px] -translate-x-1/2 w-3 h-3 rounded-full ${bg} border-2 border-white dark:border-black`}
             />
 
             <div className="bg-white dark:bg-black rounded-lg shadow-sm border p-4 space-y-3">
