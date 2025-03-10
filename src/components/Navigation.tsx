@@ -1,5 +1,4 @@
-import React from "react";
-import { Upload, Menu, LogIn, Database } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { InteriorLogo } from "./InteriorLogo";
 import { useAuth } from "../contexts/AuthContext";

@@ -1,10 +1,21 @@
-import React from 'react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { MessageSquare, Image as ImageIcon, AlertCircle, Wrench, MapPin, AlertTriangle, Navigation, Upload } from 'lucide-react';
-import { updateCategoryLabels, updateCategoryColors } from '../constants/updateCategories';
-import { TripUpdate } from '../types/database';
-import { getPublicImageUrl } from '../utils/storage';
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import {
+  MessageSquare,
+  Image as ImageIcon,
+  AlertCircle,
+  Wrench,
+  MapPin,
+  AlertTriangle,
+  Navigation,
+  Upload,
+} from "lucide-react";
+import {
+  updateCategoryLabels,
+  updateCategoryColors,
+} from "../constants/updateCategories";
+import { TripUpdate } from "../types/database";
+import { getPublicImageUrl } from "../utils/storage";
 
 const categoryIcons = {
   INICIO_RUTA: Navigation,
@@ -14,7 +25,7 @@ const categoryIcons = {
   AVERIA: Wrench,
   ROBO_ASALTO: AlertTriangle,
   PERDIDA_CONTACTO: AlertCircle,
-  VIAJE_FINALIZADO: Navigation
+  VIAJE_FINALIZADO: Navigation,
 };
 
 interface TripUpdatesListProps {
@@ -33,17 +44,19 @@ export function TripUpdatesList({ updates }: TripUpdatesListProps) {
 
   return (
     <div className="space-y-6 relative">
-      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200" />
-      
+      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-800" />
+
       {updates.map((update) => {
         const Icon = categoryIcons[update.category];
         const { bg, text } = updateCategoryColors[update.category];
-        
+
         return (
           <div key={update.id} className="relative pl-16">
-            <div className={`absolute left-7 -translate-x-1/2 w-3 h-3 rounded-full ${bg} border-2 border-white`} />
-            
-            <div className="bg-white rounded-lg shadow-sm border p-4 space-y-3">
+            <div
+              className={`absolute left-7 -translate-x-1/2 w-3 h-3 rounded-full ${bg} border-2 border-white dark:border-black`}
+            />
+
+            <div className="bg-white dark:bg-black rounded-lg shadow-sm border p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Icon className={`h-5 w-5 ${text}`} />
@@ -51,12 +64,14 @@ export function TripUpdatesList({ updates }: TripUpdatesListProps) {
                     {updateCategoryLabels[update.category]}
                   </span>
                 </div>
-                <time className="text-xs text-gray-500">
-                  {format(new Date(update.created_at), "dd-MMM-yy H:mm", { locale: es })}
+                <time className="text-xs text-gray-500 dark:text-gray-400">
+                  {format(new Date(update.created_at), "dd-MMM-yy H:mm", {
+                    locale: es,
+                  })}
                 </time>
               </div>
 
-              <div className="text-sm text-gray-700 whitespace-pre-wrap">
+              <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                 {update.notes}
               </div>
 
@@ -73,8 +88,8 @@ export function TripUpdatesList({ updates }: TripUpdatesListProps) {
                       alt="Update attachment"
                       className="h-24 w-auto rounded-lg border object-cover transition-transform group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 transition-opacity group-hover:bg-opacity-20">
-                      <ImageIcon className="h-6 w-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black dark:bg-white bg-opacity-0 transition-opacity group-hover:bg-opacity-20">
+                      <ImageIcon className="h-6 w-6 text-white dark:text-black opacity-0 transition-opacity group-hover:opacity-100" />
                     </div>
                   </a>
                 </div>

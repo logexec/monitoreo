@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { TripUpdate } from "../types/database";
 import { StatusBadge } from "../components/StatusBadge";
@@ -84,7 +84,7 @@ export function UpdatesPage() {
     <main className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-2">
       <div className="space-y-8">
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Historial de Actualizaciones
           </h2>
 
@@ -98,8 +98,8 @@ export function UpdatesPage() {
               <StatusFilter value={statusFilter} onChange={setStatusFilter} />
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-x-auto relative max-h-[calc(100vh-220px)]">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="bg-white dark:bg-black rounded-lg shadow overflow-x-auto relative max-h-[calc(100vh-220px)]">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
                 <thead className="bg-gray-800">
                   <tr>
                     <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
@@ -154,10 +154,13 @@ export function UpdatesPage() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-black divide-y divide-gray-200 dark:divide-gray-800">
                   {sortedUpdates.map((update) => (
-                    <tr key={update.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <tr
+                      key={update.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-950"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                         {update.trip?.trip_id || "—"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

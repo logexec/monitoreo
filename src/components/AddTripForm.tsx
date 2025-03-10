@@ -166,7 +166,7 @@ const AddTripForm = () => {
           >
             <Button
               type="button"
-              variant="default"
+              variant="outline"
               onClick={() => remove(index)}
             >
               <Trash2 size={16} />
@@ -241,7 +241,6 @@ const AddTripForm = () => {
                   <FormLabel>Conductor asignado</FormLabel>
                   <FormControl>
                     <Input
-                      className="bg-white"
                       placeholder="Identificación"
                       type="text"
                       pattern="[0-9]*"
@@ -250,7 +249,7 @@ const AddTripForm = () => {
                   </FormControl>
                   {/* Se muestra el nombre completo al lado si existe */}
                   {driverFullNames[index] && (
-                    <span className="text-green-600 ml-2">
+                    <span className="text-green-600 dark:text-green-400 ml-2">
                       {driverFullNames[index]}
                     </span>
                   )}
@@ -269,7 +268,6 @@ const AddTripForm = () => {
                   <FormLabel>Contacto del Conductor</FormLabel>
                   <FormControl>
                     <Input
-                      className="bg-white"
                       placeholder="Número"
                       type="tel"
                       onKeyDown={() => validarDocumento(field.value)}
@@ -309,6 +307,7 @@ const AddTripForm = () => {
         ))}
         <div className="flex items-center justify-between mt-4">
           <Button
+            variant="outline"
             type="button"
             onClick={() =>
               append({
@@ -326,7 +325,11 @@ const AddTripForm = () => {
           >
             <Plus size={16} className="mr-2" /> Agregar registro
           </Button>
-          <Button type="submit" disabled={!form.formState.isValid}>
+          <Button
+            type="submit"
+            disabled={!form.formState.isValid}
+            variant="outline"
+          >
             Enviar
           </Button>
         </div>

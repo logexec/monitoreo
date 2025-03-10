@@ -254,16 +254,16 @@ export function TripList() {
         {selectedTrips.size > 0 && (
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-500 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
           >
             <Trash2 className="h-4 w-4" />
             Eliminar ({selectedTrips.size})
           </button>
         )}
         <div className="relative">
-          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 h-4 w-4" />
           <select
-            className="pl-10 pr-4 py-2 border rounded-lg appearance-none bg-white min-w-[200px]"
+            className="pl-10 pr-4 py-2 border rounded-lg appearance-none bg-white dark:bg-black min-w-[200px]"
             value={projectFilter}
             onChange={(e) => setProjectFilter(e.target.value)}
           >
@@ -278,14 +278,15 @@ export function TripList() {
         <StatusFilter value={statusFilter} onChange={setStatusFilter} />
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-x-auto relative max-h-[calc(100vh-220px)]">
-        <table className="min-w-full divide-y divide-gray-200">
+      <div className="bg-white dark:bg-black rounded-lg shadow overflow-x-auto relative max-h-[calc(100vh-220px)]">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead className="bg-gray-800">
             <tr>
               <th className="sticky top-0 bg-gray-800 z-10 w-8 px-2">
                 <input
                   type="checkbox"
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-gray-300 dark:border-gray-700 
+                   text-blue-600 dark:text-blue-400 focus:ring-blue-500"
                   checked={
                     selectedTrips.size === sortedTrips.length &&
                     sortedTrips.length > 0
@@ -369,7 +370,7 @@ export function TripList() {
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-200">
             {sortedTrips.map((trip, index) => (
               <ExpandableRow
                 key={trip.id}
