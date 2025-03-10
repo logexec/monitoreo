@@ -1,23 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { Filter, Trash2 } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { supabase } from '../lib/supabase';
-import { Trip, TripStatus, TripUpdate } from '../types/database';
-import { TripUpdatePanel } from './TripUpdatePanel';
-import { ExpandableRow } from './ExpandableRow';
-import { StatusFilter } from './StatusFilter';
-import { SearchInput } from './SearchInput';
-import { SortableHeader } from './SortableHeader';
-import { DeleteConfirmationModal } from './DeleteConfirmationModal';
-import { SortConfig } from '../types/sorting';
-import { sortTrips } from '../utils/sorting';
-import { useRequireAuth } from '../lib/auth';
+import React, { useEffect, useState } from "react";
+import { Filter, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
+import { supabase } from "../lib/supabase";
+import { Trip, TripStatus, TripUpdate } from "../types/database";
+import { TripUpdatePanel } from "./TripUpdatePanel";
+import { ExpandableRow } from "./ExpandableRow";
+import { StatusFilter } from "./StatusFilter";
+import { SearchInput } from "./SearchInput";
+import { SortableHeader } from "./SortableHeader";
+import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
+import { SortConfig } from "../types/sorting";
+import { sortTrips } from "../utils/sorting";
+import { useRequireAuth } from "../lib/auth";
 
 interface LoadingProps {
   message?: string;
 }
 
-function Loading({ message = 'Cargando...' }: LoadingProps) {
+function Loading({ message = "Cargando..." }: LoadingProps) {
   return (
     <div className="flex items-center justify-center h-64">
       <div className="text-gray-500">{message}</div>
@@ -29,18 +29,22 @@ export function TripList() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [projectFilter, setProjectFilter] = useState<string>('all');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [projectFilter, setProjectFilter] = useState<string>("all");
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [expandedTrips, setExpandedTrips] = useState<Set<string>>(new Set());
-  const [tripUpdates, setTripUpdates] = useState<Record<string, TripUpdate[]>>({});
+  const [tripUpdates, setTripUpdates] = useState<Record<string, TripUpdate[]>>(
+    {}
+  );
   const [selectedTrips, setSelectedTrips] = useState<Set<string>>(new Set());
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
+    null
+  );
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     field: null,
-    direction: 'asc'
+    direction: "asc",
   });
 
   useEffect(() => {
@@ -49,9 +53,9 @@ export function TripList() {
         setIsAuthenticated(true);
         return loadTrips();
       })
-      .catch(error => {
-        console.error('Authentication error:', error);
-        toast.error('Error de autenticación');
+      .catch((error) => {
+        console.error("Authentication error:", error);
+        toast.error("Error de autenticación");
       })
       .finally(() => {
         setIsLoading(false);
@@ -61,10 +65,10 @@ export function TripList() {
   useEffect(() => {
     const loadAllUpdates = async () => {
       if (isAuthenticated && trips.length > 0) {
-        const updatePromises = trips.map(trip => loadTripUpdates(trip.id));
+        const updatePromises = trips.map((trip) => loadTripUpdates(trip.id));
         await Promise.all(updatePromises);
       }
-    }
+    };
     loadAllUpdates();
   }, [trips, isAuthenticated]);
 
@@ -72,17 +76,17 @@ export function TripList() {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from('trips')
-        .select('*')
-        .order('delivery_date', { ascending: false });
+        .from("trips")
+        .select("*")
+        .order("delivery_date", { ascending: false });
 
       if (error) throw error;
       if (data) {
         setTrips(data);
       }
     } catch (error) {
-      console.error('Error loading trips:', error);
-      toast.error('Error al cargar los viajes');
+      console.error("Error loading trips:", error);
+      toast.error("Error al cargar los viajes");
     } finally {
       setIsLoading(false);
     }
@@ -91,25 +95,25 @@ export function TripList() {
   const loadTripUpdates = async (tripId: string) => {
     try {
       const { data, error } = await supabase
-        .from('trip_updates')
-        .select('*')
-        .eq('trip_id', tripId)
-        .order('created_at', { ascending: false });
+        .from("trip_updates")
+        .select("*")
+        .eq("trip_id", tripId)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setTripUpdates(prev => ({
+      setTripUpdates((prev) => ({
         ...prev,
-        [tripId]: data || []
+        [tripId]: data || [],
       }));
     } catch (error) {
-      console.error('Error loading updates:', error);
+      console.error("Error loading updates:", error);
     }
   };
 
   const handleUpdateCreated = (newUpdate: TripUpdate) => {
-    setTripUpdates(prev => ({
+    setTripUpdates((prev) => ({
       ...prev,
-      [newUpdate.trip_id]: [newUpdate, ...(prev[newUpdate.trip_id] || [])]
+      [newUpdate.trip_id]: [newUpdate, ...(prev[newUpdate.trip_id] || [])],
     }));
   };
 
@@ -125,26 +129,31 @@ export function TripList() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedTrips(new Set(filteredTrips.map(trip => trip.id)));
+      setSelectedTrips(new Set(filteredTrips.map((trip) => trip.id)));
     } else {
       setSelectedTrips(new Set());
     }
   };
 
-  const handleSelectTrip = (tripId: string, checked: boolean, index: number, event?: React.MouseEvent) => {
-    if (event.shiftKey && lastSelectedIndex !== null) {
+  const handleSelectTrip = (
+    tripId: string,
+    checked: boolean,
+    index: number,
+    event?: React.MouseEvent
+  ) => {
+    if (event!.shiftKey && lastSelectedIndex !== null) {
       const newSelected = new Set(selectedTrips);
       const start = Math.min(lastSelectedIndex, index);
       const end = Math.max(lastSelectedIndex, index);
-      
-      sortedTrips.slice(start, end + 1).forEach(trip => {
+
+      sortedTrips.slice(start, end + 1).forEach((trip) => {
         if (checked) {
           newSelected.add(trip.id);
         } else {
           newSelected.delete(trip.id);
         }
       });
-      
+
       setSelectedTrips(newSelected);
     } else {
       const newSelected = new Set(selectedTrips);
@@ -160,47 +169,54 @@ export function TripList() {
 
   const handleDelete = async () => {
     try {
-      const tripsToDelete = selectedTrips.size > 0 
-        ? Array.from(selectedTrips)
-        : [selectedTrip?.id].filter(Boolean);
+      const tripsToDelete =
+        selectedTrips.size > 0
+          ? Array.from(selectedTrips)
+          : [selectedTrip?.id].filter(Boolean);
 
       const { error } = await supabase
-        .from('trips')
+        .from("trips")
         .delete()
-        .in('id', tripsToDelete);
+        .in("id", tripsToDelete);
 
       if (error) throw error;
 
-      setTrips(trips.filter(trip => !tripsToDelete.includes(trip.id)));
+      setTrips(trips.filter((trip) => !tripsToDelete.includes(trip.id)));
       setSelectedTrips(new Set());
       setSelectedTrip(null);
       setShowDeleteModal(false);
 
       toast.success(
         tripsToDelete.length === 1
-          ? 'Viaje eliminado correctamente'
+          ? "Viaje eliminado correctamente"
           : `${tripsToDelete.length} viajes eliminados correctamente`
       );
     } catch (error) {
-      console.error('Error deleting trips:', error);
-      toast.error('Error al eliminar los viajes');
+      console.error("Error deleting trips:", error);
+      toast.error("Error al eliminar los viajes");
     }
   };
 
   const handleSort = (field: string) => {
-    setSortConfig(prev => ({
+    setSortConfig((prev) => ({
       field,
-      direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
+      direction:
+        prev.field === field && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
 
-  const filteredTrips = trips.filter(trip => {
-    const matchesSearch = 
+  const filteredTrips = trips.filter((trip) => {
+    const matchesSearch =
       trip.system_trip_id.toLowerCase().includes(search.toLowerCase()) ||
-      (trip.external_trip_id?.toLowerCase() || '').includes(search.toLowerCase()) ||
+      (trip.external_trip_id?.toLowerCase() || "").includes(
+        search.toLowerCase()
+      ) ||
       trip.driver_name.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || tripUpdates[trip.id]?.[0]?.category === statusFilter;
-    const matchesProject = projectFilter === 'all' || trip.project === projectFilter;
+    const matchesStatus =
+      statusFilter === "all" ||
+      tripUpdates[trip.id]?.[0]?.category === statusFilter;
+    const matchesProject =
+      projectFilter === "all" || trip.project === projectFilter;
 
     return matchesSearch && matchesProject && matchesStatus;
   });
@@ -223,10 +239,10 @@ export function TripList() {
     );
   }
 
-  const uniqueProjects = [...new Set(trips.map(trip => trip.project))].sort();
+  const uniqueProjects = [...new Set(trips.map((trip) => trip.project))].sort();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-5">
       <div className="flex gap-4">
         <div className="flex-1">
           <SearchInput
@@ -252,15 +268,14 @@ export function TripList() {
             onChange={(e) => setProjectFilter(e.target.value)}
           >
             <option value="all">Todos los Proyectos</option>
-            {uniqueProjects.map(project => (
-              <option key={project} value={project}>{project}</option>
+            {uniqueProjects.map((project) => (
+              <option key={project} value={project}>
+                {project}
+              </option>
             ))}
           </select>
         </div>
-        <StatusFilter
-          value={statusFilter}
-          onChange={setStatusFilter}
-        />
+        <StatusFilter value={statusFilter} onChange={setStatusFilter} />
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-x-auto relative max-h-[calc(100vh-220px)]">
@@ -271,7 +286,10 @@ export function TripList() {
                 <input
                   type="checkbox"
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  checked={selectedTrips.size === sortedTrips.length && sortedTrips.length > 0}
+                  checked={
+                    selectedTrips.size === sortedTrips.length &&
+                    sortedTrips.length > 0
+                  }
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </th>
@@ -360,7 +378,9 @@ export function TripList() {
                 isExpanded={expandedTrips.has(trip.id)}
                 isSelected={selectedTrips.has(trip.id)}
                 onToggleExpand={() => toggleExpanded(trip.id)}
-                onToggleSelect={(checked, event) => handleSelectTrip(trip.id, checked, index, event)}
+                onToggleSelect={(checked, event) =>
+                  handleSelectTrip(trip.id, checked, index, event)
+                }
                 onTripSelect={setSelectedTrip}
                 updates={tripUpdates[trip.id] || []}
               />
@@ -368,20 +388,21 @@ export function TripList() {
           </tbody>
         </table>
       </div>
-      
+
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
         itemCount={selectedTrips.size || (selectedTrip ? 1 : 0)}
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteModal(false)}
       />
-      
+
       {selectedTrip && (
-        <TripUpdatePanel 
-          trip={selectedTrips.size > 0 
-            ? trips.filter(t => selectedTrips.has(t.id))
-            : selectedTrip
-          } 
+        <TripUpdatePanel
+          trip={
+            selectedTrips.size > 0
+              ? trips.filter((t) => selectedTrips.has(t.id))
+              : selectedTrip
+          }
           onClose={() => setSelectedTrip(null)}
           onUpdateCreated={handleUpdateCreated}
         />
