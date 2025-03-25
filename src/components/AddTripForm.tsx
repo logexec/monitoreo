@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -34,20 +33,28 @@ import {
 import { CalendarDays, Trash2, Plus } from "lucide-react";
 import axios, { addTrips } from "@/lib/axios";
 
+interface Driver {
+  driver_name: string;
+  driver_document: string;
+  driver_phone: string;
+}
+
 const TripSchema = z.object({
-  username: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
   deliveryDate: z.date().default(() => {
     return new Date(Date.now() - 5 * 3600000);
   }),
-  ownership: z.enum(["propio", "contratado"], {
-    message: "Debes seleccionar un tipo.",
-  }),
+  property_type: z
+    .enum(["propio", "contratado"], {
+      message: "Debes seleccionar un tipo.",
+    })
+    .nullable(),
   driver: z.string().min(5, {
     message: "El nombre del conductor debe tener al menos 5 letras.",
   }),
-  driverContact: z
+  driver_name: z.string().min(5, {
+    message: "El nombre del conductor debe tener al menos 5 letras.",
+  }),
+  driver_phone: z
     .string()
     .min(10, {
       message: "El número de teléfono del conductor debe tener 10 caracteres.",
@@ -55,8 +62,11 @@ const TripSchema = z.object({
     .max(10, {
       message: "El número de teléfono del conductor debe tener 10 caracteres.",
     }),
-  truck: z.string().min(6, {
-    message: "La placa del camión debe tener al menos 6 caracteres.",
+  driver_document: z.number().min(10, {
+    message: "El número de identificación debe tener al menos 10 caracteres.",
+  }),
+  origin: z.string().min(5, {
+    message: "El origen debe tener al menos 5 caracteres.",
   }),
   destination: z.string().min(5, {
     message: "El destino debe tener al menos 5 caracteres.",
@@ -64,10 +74,10 @@ const TripSchema = z.object({
   project: z.string().min(4, {
     message: "El nombre del proyecto debe tener al menos 4 caracteres.",
   }),
-  shift: z.string().time(),
-  origin: z.string().min(5, {
-    message: "El origen debe tener al menos 5 caracteres.",
+  plate_number: z.string().min(6, {
+    message: "La placa del camión debe tener al menos 6 caracteres.",
   }),
+  shift: z.enum(["Día", "Noche"]),
   gps_provider: z.string().min(4, {
     message: "El proveedor de GPS debe tener al menos 4 caracteres.",
   }),
@@ -80,6 +90,12 @@ const TripSchema = z.object({
   clave: z.string().min(5, {
     message: "La clave debe tener al menos 5 caracteres.",
   }),
+  current_status: z.enum(
+    ["SCHEDULED", "IN_TRANSIT", "DELAYED", "DELIVERED", "CANCELLED"],
+    {
+      message: "Debes seleccionar un estado.",
+    }
+  ),
 });
 
 const FormSchema = z.object({
@@ -92,20 +108,20 @@ const AddTripForm = () => {
     defaultValues: {
       trips: [
         {
-          username: "",
           deliveryDate: new Date(),
-          ownership: undefined,
-          driver: "",
-          driverContact: "",
-          truck: "",
+          driver_name: "",
+          driver_phone: "",
+          plate_number: "",
+          property_type: undefined,
+          origin: "",
           destination: "",
           project: "",
-          shift: "",
-          origin: "",
+          shift: "Día",
           gps_provider: "",
           uri_gps: "",
           usuario: "",
           clave: "",
+          current_status: "SCHEDULED",
         },
       ],
     },
@@ -117,9 +133,7 @@ const AddTripForm = () => {
   });
 
   // Estado para almacenar el nombre completo obtenido para cada registro (índice)
-  const [driverFullNames, setDriverFullNames] = useState<
-    Record<number, string>
-  >({});
+  const [driverInfo, setDriverInfo] = useState<Driver[]>([]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!form.formState.isValid) {
@@ -129,15 +143,15 @@ const AddTripForm = () => {
 
     try {
       const formattedTrips = data.trips.map((trip) => ({
-        delivery_date: trip.deliveryDate.toISOString().slice(0, 10),
+        delivery_date: trip.deliveryDate,
         driver_name: trip.driver,
-        driver_phone: trip.driverContact,
-        driver_email: "",
-        plate_number: trip.truck,
-        property_type: trip.ownership,
+        driver_document: trip.driver_document,
+        driver_phone: trip.driver_phone,
         origin: trip.origin,
         destination: trip.destination,
         project: trip.project,
+        plate_number: trip.plate_number,
+        property_type: trip.property_type,
         shift: trip.shift || getShift(),
         gps_provider: trip.gps_provider,
         uri_gps: trip.uri_gps,
@@ -204,14 +218,14 @@ const AddTripForm = () => {
             </Button>
             <FormField
               control={form.control}
-              name={`trips.${index}.ownership`}
+              name={`trips.${index}.property_type`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Propietario</FormLabel>
                   <FormControl>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={undefined}
                     >
                       <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Selecciona" />
@@ -279,19 +293,15 @@ const AddTripForm = () => {
                       onBlur={async () => {
                         try {
                           validarDocumento(field.value);
-                          await axios
-                            .get(`/personnel?cedula=${field.value}`)
-                            .then((response) => {
-                              if (response.data && response.data.nombre) {
-                                setDriverFullNames((prev) => ({
-                                  ...prev,
-                                  [index]: response.data.nombre_completo,
-                                }));
-                              }
-                            })
-                            .catch((error) => {
-                              toast.error(error.message);
-                            });
+                          // getCSRFToken();
+                          const response = await axios.get(
+                            `/personnel?cedula=${field.value}`
+                          );
+                          console.log("Driver: ", response.data.driver);
+                          setDriverInfo((prev) => ({
+                            ...prev,
+                            [index]: response.data.driver,
+                          }));
                         } catch (error) {
                           console.error(error);
                           toast.error(error instanceof Error && error.message);
@@ -299,9 +309,9 @@ const AddTripForm = () => {
                       }}
                     />
                   </FormControl>
-                  {driverFullNames[index] && (
-                    <span className="text-green-600 dark:text-green-400 ml-2">
-                      {driverFullNames[index]}
+                  {driverInfo[index] && (
+                    <span className="text-gray-600 dark:text-gray-400 text-xs capitalize">
+                      ({driverInfo[index].company_name})
                     </span>
                   )}
                   <FormDescription>
@@ -313,12 +323,18 @@ const AddTripForm = () => {
             />
             <FormField
               control={form.control}
-              name={`trips.${index}.driverContact`}
+              name={`trips.${index}.driver_phone`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Contacto del Conductor</FormLabel>
                   <FormControl>
-                    <Input placeholder="Número" type="tel" {...field} />
+                    <Input
+                      placeholder="Número"
+                      type="tel"
+                      {...(field.value =
+                        (driverInfo[index] && driverInfo[index].phone) || "")}
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>
                     Inserta el número de contacto del conductor asignado.
@@ -359,13 +375,13 @@ const AddTripForm = () => {
               append({
                 username: "",
                 deliveryDate: new Date(),
-                ownership: undefined,
+                property_type: undefined,
                 driver: "",
                 driverContact: "",
                 truck: "",
                 destination: "",
                 project: "",
-                shift: "",
+                shift: "Día",
               })
             }
           >
