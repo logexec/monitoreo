@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { X, Upload } from "lucide-react";
 import { Trip, TripUpdate, UpdateCategory } from "../types/database";
 import { updateCategoryLabels } from "../constants/updateCategories";
-import { supabase } from "../lib/supabase";
 import { uploadImage } from "../utils/storage";
-import toast from "react-hot-toast";
 import { motion } from "motion/react";
+import { updateTrip } from "@/lib/axios";
+import { toast } from "sonner";
 
 interface TripUpdatePanelProps {
   trip: Trip | Trip[];
@@ -53,23 +53,17 @@ export function TripUpdatePanel({
       const trips = Array.isArray(trip) ? trip : [trip];
       const updates = [];
 
-      // Upload image once if provided
+      // Subir imagen si se proporciona
       const imageUrl = file ? await uploadImage(file) : null;
 
-      // Create updates for all selected trips
+      // Crear actualizaciones para todos los viajes seleccionados
       for (const t of trips) {
-        const { data, error } = await supabase
-          .from("trip_updates")
-          .insert({
-            trip_id: t.id,
-            category,
-            notes,
-            image_url: imageUrl,
-          })
-          .select("*, updated_by")
-          .single();
-
-        if (error) throw error;
+        const data = await updateTrip(
+          t.id,
+          category,
+          notes,
+          imageUrl || undefined
+        );
         if (data) updates.push(data as TripUpdate);
       }
 

@@ -32,9 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { CalendarDays, Trash2, Plus } from "lucide-react";
-
-// Se agrega la importación de supabase para el fetch
-// import { supabase } from "@/lib/supabase";
+import axios, { addTrips } from "@/lib/axios";
 
 const TripSchema = z.object({
   username: z.string().min(2, {
@@ -46,8 +44,8 @@ const TripSchema = z.object({
   ownership: z.enum(["propio", "contratado"], {
     message: "Debes seleccionar un tipo.",
   }),
-  driver: z.string().min(2, {
-    message: "Driver must be at least 2 characters.",
+  driver: z.string().min(5, {
+    message: "El nombre del conductor debe tener al menos 5 letras.",
   }),
   driverContact: z
     .string()
@@ -57,16 +55,31 @@ const TripSchema = z.object({
     .max(10, {
       message: "El número de teléfono del conductor debe tener 10 caracteres.",
     }),
-  truck: z.string().min(2, {
-    message: "Truck must be at least 2 characters.",
+  truck: z.string().min(6, {
+    message: "La placa del camión debe tener al menos 6 caracteres.",
   }),
-  destination: z.string().min(2, {
-    message: "Truck must be at least 2 characters.",
+  destination: z.string().min(5, {
+    message: "El destino debe tener al menos 5 caracteres.",
   }),
-  project: z.string().min(2, {
-    message: "Truck must be at least 2 characters.",
+  project: z.string().min(4, {
+    message: "El nombre del proyecto debe tener al menos 4 caracteres.",
   }),
   shift: z.string().time(),
+  origin: z.string().min(5, {
+    message: "El origen debe tener al menos 5 caracteres.",
+  }),
+  gps_provider: z.string().min(4, {
+    message: "El proveedor de GPS debe tener al menos 4 caracteres.",
+  }),
+  uri_gps: z.string().min(8, {
+    message: "El link del GPS debe tener al menos 8 caracteres.",
+  }),
+  usuario: z.string().min(4, {
+    message: "El usuario debe tener al menos 4 caracteres.",
+  }),
+  clave: z.string().min(5, {
+    message: "La clave debe tener al menos 5 caracteres.",
+  }),
 });
 
 const FormSchema = z.object({
@@ -88,6 +101,11 @@ const AddTripForm = () => {
           destination: "",
           project: "",
           shift: "",
+          origin: "",
+          gps_provider: "",
+          uri_gps: "",
+          usuario: "",
+          clave: "",
         },
       ],
     },
@@ -103,29 +121,42 @@ const AddTripForm = () => {
     Record<number, string>
   >({});
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!form.formState.isValid) {
       toast.error("Por favor, completa todos los campos obligatorios.");
       return;
     }
-    toast.success(`Carga exitosa: ${JSON.stringify(data.trips)}`);
-    form.reset({
-      trips: [
-        {
-          username: "",
-          deliveryDate: new Date(),
-          ownership: undefined,
-          driver: "",
-          driverContact: "",
-          truck: "",
-          destination: "",
-          project: "",
-          shift: "",
-        },
-      ],
-    });
-    // Reiniciamos los nombres completos
-    setDriverFullNames({});
+
+    try {
+      const formattedTrips = data.trips.map((trip) => ({
+        delivery_date: trip.deliveryDate.toISOString().slice(0, 10),
+        driver_name: trip.driver,
+        driver_phone: trip.driverContact,
+        driver_email: "",
+        plate_number: trip.truck,
+        property_type: trip.ownership,
+        origin: trip.origin,
+        destination: trip.destination,
+        project: trip.project,
+        shift: trip.shift || getShift(),
+        gps_provider: trip.gps_provider,
+        uri_gps: trip.uri_gps,
+        usuario: trip.usuario,
+        clave: trip.clave,
+        current_status: "SCHEDULED",
+      }));
+
+      await addTrips(formattedTrips);
+      toast.success(
+        data.trips.length > 1
+          ? "¡Viajes agregados con éxito!"
+          : "¡Viaje agregado con éxito!"
+      );
+      form.reset();
+    } catch (error) {
+      console.error("Error al registrar viajes:", error);
+      toast.error("Error al registrar los viajes");
+    }
   }
 
   const today = (date = new Date()) => {
@@ -245,9 +276,29 @@ const AddTripForm = () => {
                       type="text"
                       pattern="[0-9]*"
                       {...field}
+                      onBlur={async () => {
+                        try {
+                          validarDocumento(field.value);
+                          await axios
+                            .get(`/personnel?cedula=${field.value}`)
+                            .then((response) => {
+                              if (response.data && response.data.nombre) {
+                                setDriverFullNames((prev) => ({
+                                  ...prev,
+                                  [index]: response.data.nombre_completo,
+                                }));
+                              }
+                            })
+                            .catch((error) => {
+                              toast.error(error.message);
+                            });
+                        } catch (error) {
+                          console.error(error);
+                          toast.error(error instanceof Error && error.message);
+                        }
+                      }}
                     />
                   </FormControl>
-                  {/* Se muestra el nombre completo al lado si existe */}
                   {driverFullNames[index] && (
                     <span className="text-green-600 dark:text-green-400 ml-2">
                       {driverFullNames[index]}
@@ -267,12 +318,7 @@ const AddTripForm = () => {
                 <FormItem>
                   <FormLabel>Contacto del Conductor</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Número"
-                      type="tel"
-                      onKeyDown={() => validarDocumento(field.value)}
-                      {...field}
-                    />
+                    <Input placeholder="Número" type="tel" {...field} />
                   </FormControl>
                   <FormDescription>
                     Inserta el número de contacto del conductor asignado.

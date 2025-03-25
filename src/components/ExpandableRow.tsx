@@ -1,7 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Trip } from "../types/database";
+import { Trip, TripUpdate } from "../types/database";
 import { StatusBadge } from "./StatusBadge";
 import { TripUpdatesList } from "./TripUpdatesList";
 import { LastUpdateCell } from "./LastUpdateCell";
@@ -14,7 +14,7 @@ interface ExpandableRowProps {
   onToggleExpand: () => void;
   onToggleSelect: (checked: boolean, event?: React.MouseEvent) => void;
   onTripSelect: (trip: Trip) => void;
-  updates: any[];
+  updates: TripUpdate[];
 }
 
 export function ExpandableRow({
@@ -63,11 +63,11 @@ export function ExpandableRow({
           onClick={() => onTripSelect(trip)}
         >
           {trip.system_trip_id}
-          {trip.external_trip_id && (
+          {/* {trip.external_trip_id && (
             <span className="ml-2 text-xs text-gray-500">
               ({trip.external_trip_id})
             </span>
-          )}
+          )} */}
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
           {format(new Date(trip.delivery_date), "dd/MM/yyyy")}
@@ -98,10 +98,20 @@ export function ExpandableRow({
           <LastUpdateCell updates={updates} />
         </td>
       </tr>
-      {isExpanded && (
+      {updates.length > 0 && isExpanded && (
         <tr>
           <td colSpan={11} className="px-6 py-4 bg-gray-50 dark:bg-gray-950">
             <TripUpdatesList updates={updates} />
+          </td>
+        </tr>
+      )}
+      {isExpanded && updates.length === 0 && (
+        <tr>
+          <td
+            colSpan={11}
+            className="px-6 py-4 bg-gray-50 dark:bg-black/90 text-gray-400 dark:text-gray-500 select-none text-center"
+          >
+            No hay actualizaciones
           </td>
         </tr>
       )}

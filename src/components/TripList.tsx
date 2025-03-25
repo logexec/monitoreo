@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Filter, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { supabase } from "../lib/supabase";
-import { Trip, TripStatus, TripUpdate } from "../types/database";
+import { Trip, TripUpdate } from "../types/database";
 import { TripUpdatePanel } from "./TripUpdatePanel";
 import { ExpandableRow } from "./ExpandableRow";
 import { StatusFilter } from "./StatusFilter";
@@ -11,22 +11,11 @@ import { SortableHeader } from "./SortableHeader";
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
 import { SortConfig } from "../types/sorting";
 import { sortTrips } from "../utils/sorting";
-import { useRequireAuth } from "../lib/auth";
-
-interface LoadingProps {
-  message?: string;
-}
-
-function Loading({ message = "Cargando..." }: LoadingProps) {
-  return (
-    <div className="flex items-center justify-center h-64">
-      <div className="text-gray-500">{message}</div>
-    </div>
-  );
-}
+import { getTrips } from "@/lib/axios";
+import Loading from "./Loading";
+import CustomSwitch from "./ui/CustomSwitch";
 
 export function TripList() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [search, setSearch] = useState("");
@@ -34,9 +23,6 @@ export function TripList() {
   const [projectFilter, setProjectFilter] = useState<string>("all");
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [expandedTrips, setExpandedTrips] = useState<Set<string>>(new Set());
-  const [tripUpdates, setTripUpdates] = useState<Record<string, TripUpdate[]>>(
-    {}
-  );
   const [selectedTrips, setSelectedTrips] = useState<Set<string>>(new Set());
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
@@ -46,75 +32,41 @@ export function TripList() {
     field: null,
     direction: "asc",
   });
+  const [selectedValue, setSelectedValue] = useState("on");
 
   useEffect(() => {
-    useRequireAuth()
-      .then(() => {
-        setIsAuthenticated(true);
-        return loadTrips();
-      })
-      .catch((error) => {
-        console.error("Authentication error:", error);
-        toast.error("Error de autenticación");
-      })
-      .finally(() => {
+    const fetchTrips = async () => {
+      setIsLoading(true);
+      try {
+        const response = await getTrips(
+          selectedValue === "on"
+            ? new Date().toISOString().slice(0, 10)
+            : undefined
+        );
+        setTrips(response);
+      } catch (error) {
+        console.error(error);
+      } finally {
         setIsLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    const loadAllUpdates = async () => {
-      if (isAuthenticated && trips.length > 0) {
-        const updatePromises = trips.map((trip) => loadTripUpdates(trip.id));
-        await Promise.all(updatePromises);
       }
     };
-    loadAllUpdates();
-  }, [trips, isAuthenticated]);
 
-  const loadTrips = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from("trips")
-        .select("*")
-        .order("delivery_date", { ascending: false });
-
-      if (error) throw error;
-      if (data) {
-        setTrips(data);
-      }
-    } catch (error) {
-      console.error("Error loading trips:", error);
-      toast.error("Error al cargar los viajes");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadTripUpdates = async (tripId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("trip_updates")
-        .select("*")
-        .eq("trip_id", tripId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setTripUpdates((prev) => ({
-        ...prev,
-        [tripId]: data || [],
-      }));
-    } catch (error) {
-      console.error("Error loading updates:", error);
-    }
-  };
+    fetchTrips();
+  }, [selectedValue]);
 
   const handleUpdateCreated = (newUpdate: TripUpdate) => {
-    setTripUpdates((prev) => ({
-      ...prev,
-      [newUpdate.trip_id]: [newUpdate, ...(prev[newUpdate.trip_id] || [])],
-    }));
+    setTrips((prevTrips) =>
+      prevTrips.map((trip) =>
+        trip.id === newUpdate.trip_id
+          ? {
+              ...trip,
+              updates: trip.updates?.some((u) => u.id === newUpdate.id)
+                ? trip.updates // Si ya existe, no agregar
+                : [newUpdate, ...(trip.updates || [])], // Si no existe, agregar
+            }
+          : trip
+      )
+    );
   };
 
   const toggleExpanded = (tripId: string) => {
@@ -213,28 +165,23 @@ export function TripList() {
       ) ||
       trip.driver_name.toLowerCase().includes(search.toLowerCase());
     const matchesStatus =
-      statusFilter === "all" ||
-      tripUpdates[trip.id]?.[0]?.category === statusFilter;
+      statusFilter === "all" || trip.updates?.[0]?.category === statusFilter; // Usa updates directamente
     const matchesProject =
       projectFilter === "all" || trip.project === projectFilter;
 
     return matchesSearch && matchesProject && matchesStatus;
   });
 
-  const sortedTrips = sortTrips(filteredTrips, sortConfig, tripUpdates);
+  const sortedTrips = sortTrips(filteredTrips, sortConfig);
 
   if (isLoading) {
-    return <Loading />;
+    return <Loading text="Cargando viajes..." fullScreen />;
   }
 
-  if (!isAuthenticated) {
-    return <Loading message="Verificando autenticación..." />;
-  }
-
-  if (trips.length === 0) {
+  if (trips.length === 0 && !isLoading) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">No hay viajes disponibles</p>
+        <p className="text-gray-500">No hay viajes disponibles.</p>
       </div>
     );
   }
@@ -248,8 +195,11 @@ export function TripList() {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Buscar viajes..."
+            placeholder={`Buscar viajes... (${trips.length})`}
           />
+        </div>
+        <div className="flex items-center gap-2">
+          <CustomSwitch value={selectedValue} onChange={setSelectedValue} />
         </div>
         {selectedTrips.size > 0 && (
           <button
@@ -285,7 +235,7 @@ export function TripList() {
               <th className="sticky top-0 bg-gray-800 z-10 w-8 px-2">
                 <input
                   type="checkbox"
-                  className="rounded border-gray-300 dark:border-gray-700 
+                  className="rounded border-gray-300 dark:border-gray-700
                    text-blue-600 dark:text-blue-400 focus:ring-blue-500"
                   checked={
                     selectedTrips.size === sortedTrips.length &&
@@ -383,7 +333,7 @@ export function TripList() {
                   handleSelectTrip(trip.id, checked, index, event)
                 }
                 onTripSelect={setSelectedTrip}
-                updates={tripUpdates[trip.id] || []}
+                updates={trip.updates || []}
               />
             ))}
           </tbody>

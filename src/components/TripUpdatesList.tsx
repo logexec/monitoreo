@@ -29,11 +29,11 @@ const categoryIcons = {
 };
 
 interface TripUpdatesListProps {
-  updates: TripUpdate[];
+  updates: TripUpdate[] | undefined;
 }
 
 export function TripUpdatesList({ updates }: TripUpdatesListProps) {
-  if (updates.length === 0) {
+  if (!updates) {
     return (
       <div className="py-8 text-center text-gray-500">
         <MessageSquare className="mx-auto h-8 w-8 mb-2 text-gray-400" />

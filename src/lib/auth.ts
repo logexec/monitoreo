@@ -1,62 +1,18 @@
-import { supabase } from "./supabase";
-import toast from "react-hot-toast";
+// src/auth.ts
+import axios from "./axios";
+import { toast } from "sonner";
 
-async function signIn() {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: "demo@example.com",
-    password: "demo12345",
-  });
+const API_URL = import.meta.env.VITE_API_URL;
 
-  if (error) {
-    console.error("Sign in error:", error);
-    throw new Error(
-      "Error al iniciar sesión. Por favor, verifica tus credenciales."
+export async function getUser() {
+  try {
+    const response = await axios.get(`${API_URL}/me`); // Usa la URL base configurada
+    return response.data;
+  } catch (error) {
+    toast.error(
+      error instanceof Error ? error.message : "Ocurrió un error desconocido."
     );
+    console.error("Error en getUser:", error);
+    return null;
   }
-  return data.session;
 }
-
-async function signUp() {
-  const { data, error } = await supabase.auth.signUp({
-    email: "demo@example.com",
-    password: "demo12345",
-  });
-
-  if (error) {
-    console.error("Sign up error:", error);
-    if (error.message.includes("already registered")) {
-      return signIn();
-    }
-    throw new Error("Error al crear la cuenta. Por favor, intenta nuevamente.");
-  }
-  return data.session;
-}
-
-export async function useRequireAuth() {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) {
-    try {
-      const authSession = await signIn();
-      toast.success("Sesión iniciada correctamente");
-      return authSession;
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error);
-      try {
-        const authSession = await signUp();
-        toast.success("Cuenta creada y sesión iniciada correctamente");
-        return authSession;
-      } catch (signUpError) {
-        toast.error(
-          signUpError instanceof Error
-            ? signUpError.message
-            : "Error de autenticación"
-        );
-        throw signUpError;
-      }
-    }
-  }
-  return session;
-}
-export const { data, error } = await supabase.auth.getSession();

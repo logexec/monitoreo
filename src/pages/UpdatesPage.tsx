@@ -1,6 +1,4 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
 import { TripUpdate } from "../types/database";
 import { StatusBadge } from "../components/StatusBadge";
 import { format } from "date-fns";
@@ -10,8 +8,20 @@ import { SearchInput } from "../components/SearchInput";
 import { StatusFilter } from "../components/StatusFilter";
 import { sortUpdates } from "../utils/updateSorting";
 import { SortConfig } from "../types/sorting";
-import { useRequireAuth } from "../lib/auth";
-import toast from "react-hot-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import Loading from "@/components/Loading";
+import axios from "axios";
+import { toast } from "sonner";
+
+// Interfaz extendida solo para UpdatesPage
+interface ExtendedTripUpdate extends TripUpdate {
+  trip?: {
+    trip_id?: string; // Usamos system_trip_id en el mapeo
+    system_trip_id?: string; // Usamos system_trip_id en el mapeo
+    plate_number: string;
+    project: string;
+  };
+}
 
 export function UpdatesPage() {
   const [updates, setUpdates] = useState<
@@ -25,33 +35,26 @@ export function UpdatesPage() {
     field: "created_at",
     direction: "desc",
   });
+  const { isLoading } = useAuth();
 
   useEffect(() => {
-    useRequireAuth()
-      .then(loadUpdates)
-      .catch((error) => {
-        console.error("Authentication error:", error);
-        toast.error("Error de autenticación");
-      });
+    loadUpdates();
   }, []);
 
   const loadUpdates = async () => {
     try {
-      const { data, error } = await supabase
-        .from("trip_updates")
-        .select(
-          `
-          *,
-          trip:trip_id (
-            trip_id,
-            plate_number,
-            project
-          )
-        `
-        )
-        .order("created_at", { ascending: false });
+      const response = await axios.get("/trip-updates");
 
-      if (error) throw error;
+      const data = await response.data.map((update: ExtendedTripUpdate) => {
+        return {
+          ...update,
+          trip: {
+            trip_id: update.trip!.system_trip_id || "—",
+            plate_number: update.trip!.plate_number || "—",
+            project: update.trip!.project || "—",
+          },
+        };
+      });
       setUpdates(data || []);
     } catch (error) {
       console.error("Error loading updates:", error);
@@ -80,6 +83,10 @@ export function UpdatesPage() {
   });
 
   const sortedUpdates = sortUpdates(filteredUpdates, sortConfig);
+
+  if (isLoading) {
+    return <Loading text="Cargando..." />;
+  }
 
   return (
     <main className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-2">

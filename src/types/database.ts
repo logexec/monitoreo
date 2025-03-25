@@ -1,13 +1,28 @@
-export type TripStatus = 'SCHEDULED' | 'IN_TRANSIT' | 'DELAYED' | 'DELIVERED' | 'CANCELLED';
+export type TripStatus =
+  | "SCHEDULED"
+  | "IN_TRANSIT"
+  | "DELAYED"
+  | "DELIVERED"
+  | "CANCELLED";
 
-export type UpdateCategory = 'INICIO_RUTA' | 'SEGUIMIENTO' | 'ACCIDENTE' | 'AVERIA' | 'ROBO_ASALTO' | 'PERDIDA_CONTACTO' | 'VIAJE_CARGADO' | 'VIAJE_FINALIZADO';
+export type UpdateCategory =
+  | "INICIO_RUTA"
+  | "SEGUIMIENTO"
+  | "ACCIDENTE"
+  | "AVERIA"
+  | "ROBO_ASALTO"
+  | "PERDIDA_CONTACTO"
+  | "VIAJE_CARGADO"
+  | "VIAJE_FINALIZADO";
 
 export interface Trip {
   id: string;
+  trip_id: string;
   system_trip_id: string;
-  external_trip_id: string;
+  external_trip_id: string | null;
   delivery_date: string;
   driver_name: string;
+  driver_document: string | null;
   driver_phone: string | null;
   origin: string | null;
   destination: string;
@@ -19,6 +34,7 @@ export interface Trip {
   current_status: TripStatus;
   created_at: string;
   updated_at: string;
+  updates: TripUpdate[];
 }
 
 export interface TripUpdate {
@@ -26,7 +42,7 @@ export interface TripUpdate {
   trip_id: string;
   category: UpdateCategory;
   notes: string;
-  image_url?: string;
+  image_url?: string | null;
   created_at: string;
   updated_by: string;
 }
