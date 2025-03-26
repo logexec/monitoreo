@@ -100,7 +100,7 @@ export async function updateTrip(
 
 export async function getPlateNumbers() {
   try {
-    getCSRFToken();
+    await getCSRFToken();
     const response = await axios.get("/plate-numbers");
     return response.data;
   } catch (error) {
