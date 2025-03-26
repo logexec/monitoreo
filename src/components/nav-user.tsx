@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/sidebar";
 import { useTheme } from "./theme-provider";
 import { Button } from "./ui/button";
+import { logout } from "@/lib/axios";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export function NavUser({
   user,
@@ -32,6 +35,17 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const { setTheme } = useTheme();
+  const navigator = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigator("/login");
+    } catch (error) {
+      toast.error("Ocurrió un problema al cerrar sesión");
+      console.error(error);
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -114,7 +128,7 @@ export function NavUser({
               </DropdownMenu>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleLogout()}>
               <LogOut />
               Cerrar sesión
             </DropdownMenuItem>

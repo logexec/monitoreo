@@ -128,4 +128,13 @@ export async function uploadImage(file: File): Promise<string> {
   }
 }
 
+export async function logout() {
+  try {
+    await getCSRFToken();
+    await axios.post("/logout");
+  } catch (error) {
+    console.error("Error al cerrar sesión:", error);
+  }
+}
+
 export default axios;
