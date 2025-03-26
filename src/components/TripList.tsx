@@ -331,8 +331,8 @@ export function TripList() {
             ) : (
               <tr>
                 <td
-                  colSpan={4}
-                  className="p-4 text-center text-gray-500 dark:text-gray-400"
+                  colSpan={10}
+                  className="p-4 text-center text-gray-300 dark:text-gray-600"
                 >
                   No se encontraron viajes con este filtro
                 </td>
