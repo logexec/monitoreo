@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Filter, Trash2 } from "lucide-react";
-import toast from "react-hot-toast";
-import { supabase } from "../lib/supabase";
+import { toast } from "sonner";
 import { Trip, TripUpdate } from "../types/database";
 import { TripUpdatePanel } from "./TripUpdatePanel";
 import { ExpandableRow } from "./ExpandableRow";
@@ -126,12 +125,12 @@ export function TripList() {
           ? Array.from(selectedTrips)
           : [selectedTrip?.id].filter(Boolean);
 
-      const { error } = await supabase
-        .from("trips")
-        .delete()
-        .in("id", tripsToDelete);
+      // const { error } = await supabase
+      //   .from("trips")
+      //   .delete()
+      //   .in("id", tripsToDelete);
 
-      if (error) throw error;
+      // if (error) throw error;
 
       setTrips(trips.filter((trip) => !tripsToDelete.includes(trip.id)));
       setSelectedTrips(new Set());

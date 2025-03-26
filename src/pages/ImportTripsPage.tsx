@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { DateProjectSelector } from "../components/TripLoader/DateProjectSelector";
 import { MySQLTripList } from "../components/TripLoader/MySQLTripList";
 import { MySQLTrip } from "../types/mysql";
-import { supabase } from "../lib/supabase";
 import { getProjects, getTrips } from "../lib/mysql";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -70,9 +69,9 @@ export function ImportTripsPage() {
           current_status: "SCHEDULED" as const,
         }));
 
-      const { error } = await supabase.from("trips").insert(tripsToImport);
+      // const { error } = await supabase.from("trips").insert(tripsToImport);
 
-      if (error) throw error;
+      // if (error) throw error;
 
       toast.success(`${selectedTrips.size} viajes importados correctamente`);
       navigate("/");

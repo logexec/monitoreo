@@ -9,13 +9,13 @@ import {
   AlertTriangle,
   Navigation,
   Upload,
+  FileText,
 } from "lucide-react";
 import {
   updateCategoryLabels,
   updateCategoryColors,
 } from "../constants/updateCategories";
 import { TripUpdate } from "../types/database";
-import { getPublicImageUrl } from "../utils/storage";
 
 const categoryIcons = {
   INICIO_RUTA: Navigation,
@@ -50,6 +50,9 @@ export function TripUpdatesList({ updates }: TripUpdatesListProps) {
         const Icon = categoryIcons[update.category];
         const { bg, text } = updateCategoryColors[update.category];
 
+        // Detectar si la URL es un PDF
+        const isPDF = update.image_url?.endsWith(".pdf");
+
         return (
           <div key={update.id} className="relative pl-16">
             <div
@@ -78,19 +81,30 @@ export function TripUpdatesList({ updates }: TripUpdatesListProps) {
               {update.image_url && (
                 <div className="mt-3">
                   <a
-                    href={getPublicImageUrl(update.image_url)}
+                    href={update.image_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group relative inline-block"
                   >
-                    <img
-                      src={getPublicImageUrl(update.image_url)}
-                      alt="Update attachment"
-                      className="h-24 w-auto rounded-lg border object-cover transition-transform group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black dark:bg-white bg-opacity-0 transition-opacity group-hover:bg-opacity-20">
-                      <ImageIcon className="h-6 w-6 text-white dark:text-black opacity-0 transition-opacity group-hover:opacity-100" />
-                    </div>
+                    {isPDF ? (
+                      <div className="flex items-center space-x-2 p-2 border rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                        <FileText className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          Ver archivo PDF
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <img
+                          src={update.image_url}
+                          alt="Evidencia"
+                          className="h-24 w-auto rounded-lg border object-cover transition-transform group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black dark:bg-white bg-opacity-0 transition-opacity group-hover:bg-opacity-20">
+                          <ImageIcon className="h-6 w-6 text-white dark:text-black opacity-0 transition-opacity group-hover:opacity-100" />
+                        </div>
+                      </>
+                    )}
                   </a>
                 </div>
               )}

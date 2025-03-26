@@ -49,20 +49,20 @@ export async function getTripUpdates(trip_id?: string) {
 
 export async function addTrips(
   trips: Array<{
-    delivery_date: string;
+    delivery_date: Date;
     driver_name: string;
-    driver_email: string;
+    driver_document: string;
     driver_phone: string;
     origin: string;
     destination: string;
     project: string;
-    plate_number: string;
     property_type: string;
+    plate_number: string;
     shift?: string;
-    gps_provider?: string;
     uri_gps?: string;
     usuario?: string;
     clave?: string;
+    gps_provider?: string;
     current_status?: string;
   }>
 ) {
@@ -95,6 +95,36 @@ export async function updateTrip(
   } catch (error) {
     console.error("Error al actualizar el viaje:", error);
     throw error;
+  }
+}
+
+export async function getPlateNumbers() {
+  try {
+    getCSRFToken();
+    const response = await axios.get("/plate-numbers");
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener los números de placa:", error);
+    throw error;
+  }
+}
+
+export async function uploadImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  try {
+    await getCSRFToken();
+    const response = await axios.post("/upload-image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return response.data.url;
+  } catch (error) {
+    console.error("Error al subir la imagen:", error);
+    throw new Error("No se pudo subir la imagen");
   }
 }
 

@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload } from "lucide-react";
-import { supabase } from "../lib/supabase";
 import { parseTripFromCSV } from "../utils/tripParser";
 
 import toast from "react-hot-toast";
@@ -31,7 +30,7 @@ export function TripUploader() {
         throw new Error("No se encontraron viajes válidos en el archivo CSV");
       }
 
-      const { error: uploadError } = await supabase.from("trips").insert(trips);
+      // const { error: uploadError } = await supabase.from("trips").insert(trips);
 
       if (uploadError) throw uploadError;
 

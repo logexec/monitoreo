@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import { X, Upload } from "lucide-react";
 import { Trip, TripUpdate, UpdateCategory } from "../types/database";
 import { updateCategoryLabels } from "../constants/updateCategories";
-import { uploadImage } from "../utils/storage";
 import { motion } from "motion/react";
-import { updateTrip } from "@/lib/axios";
+import { updateTrip, uploadImage } from "@/lib/axios";
 import { toast } from "sonner";
 
 interface TripUpdatePanelProps {
