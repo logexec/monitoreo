@@ -171,18 +171,10 @@ export function TripList() {
     return matchesSearch && matchesProject && matchesStatus;
   });
 
-  const sortedTrips = sortTrips(filteredTrips, sortConfig);
+  const sortedTrips = sortTrips(filteredTrips, sortConfig) || [];
 
   if (isLoading) {
     return <Loading text="Cargando viajes..." fullScreen />;
-  }
-
-  if (trips.length === 0 && !isLoading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">No hay viajes disponibles.</p>
-      </div>
-    );
   }
 
   const uniqueProjects = [...new Set(trips.map((trip) => trip.project))].sort();
@@ -320,21 +312,32 @@ export function TripList() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-200">
-            {sortedTrips.map((trip, index) => (
-              <ExpandableRow
-                key={trip.id}
-                index={index}
-                trip={trip}
-                isExpanded={expandedTrips.has(trip.id)}
-                isSelected={selectedTrips.has(trip.id)}
-                onToggleExpand={() => toggleExpanded(trip.id)}
-                onToggleSelect={(checked, event) =>
-                  handleSelectTrip(trip.id, checked, index, event)
-                }
-                onTripSelect={setSelectedTrip}
-                updates={trip.updates || []}
-              />
-            ))}
+            {sortedTrips.length > 1 ? (
+              sortedTrips.map((trip, index) => (
+                <ExpandableRow
+                  key={trip.id}
+                  index={index}
+                  trip={trip}
+                  isExpanded={expandedTrips.has(trip.id)}
+                  isSelected={selectedTrips.has(trip.id)}
+                  onToggleExpand={() => toggleExpanded(trip.id)}
+                  onToggleSelect={(checked, event) =>
+                    handleSelectTrip(trip.id, checked, index, event)
+                  }
+                  onTripSelect={setSelectedTrip}
+                  updates={trip.updates || []}
+                />
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan={4}
+                  className="p-4 text-center text-gray-500 dark:text-gray-400"
+                >
+                  No se encontraron viajes con este filtro
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
