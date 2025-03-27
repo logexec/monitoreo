@@ -2,7 +2,7 @@
 "use client";
 
 import { validarDocumento } from "@/lib/id-validator";
-import axios, { addTrips, getPlateNumbers } from "@/lib/axios";
+import axios, { addTrips, getCSRFToken, getPlateNumbers } from "@/lib/axios";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
@@ -40,16 +40,22 @@ import {
 } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 
-// interface Driver {
-//   driver_name: string;
-//   driver_document: string;
-//   driver_phone: string;
-// }
+interface Driver {
+  company_name: string;
+  identification: string;
+  phone: string;
+}
+
+interface Plates {
+  id: number;
+  name: string;
+}
 
 const formSchema = z.object({
   delivery_date: z.coerce.date(),
   origin: z.string().min(1).min(3),
   destination: z.string().min(1).min(3),
+  project: z.string().min(1).min(3),
   driver_document: z.number(),
   driver_phone: z.string(),
   driver_name: z.string().min(1).min(3),
@@ -61,7 +67,7 @@ const formSchema = z.object({
 });
 
 const AddTripForm = () => {
-  const [plateNumbers, setPlateNumbers] = useState([]);
+  const [plateNumbers, setPlateNumbers] = useState<Plates[]>();
 
   useEffect(() => {
     const fetchPlateNumbers = async () => {
@@ -147,24 +153,6 @@ const AddTripForm = () => {
   //   }
   // }
 
-  // onBlur={async () => {
-  //                       try {
-  //                         validarDocumento(field.value);
-  //                         // getCSRFToken();
-  //                         const response = await axios.get(
-  //                           `/personnel?cedula=${field.value}`
-  //                         );
-  //                         console.log("Driver: ", response.data.driver);
-  //                         setDriverInfo((prev) => ({
-  //                           ...prev,
-  //                           [index]: response.data.driver,
-  //                         }));
-  //                       } catch (error) {
-  //                         console.error(error);
-  //                         toast.error(error instanceof Error && error.message);
-  //                       }
-  //                     }}
-
   // const today = (date = new Date()) => {
   //   return parseInt(
   //     Intl.DateTimeFormat("es-EC", {
@@ -183,14 +171,19 @@ const AddTripForm = () => {
   //   return "Noche";
   // };
 
+  const [driverInfo, setDriverInfo] = useState<Driver | null>(null);
+
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 max-w-3xl mx-auto py-10"
+        className="space-y-8 max-w-5xl mx-auto py-5"
       >
         <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-4">
+          <h3 className="text-gray-400 dark:text-gray-600 font-medium text-xs col-span-12 border-b border-gray-200">
+            Datos del viaje
+          </h3>
+          <div className="col-span-3">
             <FormField
               control={form.control}
               name="delivery_date"
@@ -210,7 +203,9 @@ const AddTripForm = () => {
                           {field.value ? (
                             format(field.value, "PPP")
                           ) : (
-                            <span>Pick a date</span>
+                            <span className="text-gray-400 dark:text-gray-600">
+                              Selecciona una fecha
+                            </span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -234,7 +229,7 @@ const AddTripForm = () => {
             />
           </div>
 
-          <div className="col-span-4">
+          <div className="col-span-3">
             <FormField
               control={form.control}
               name="origin"
@@ -242,7 +237,12 @@ const AddTripForm = () => {
                 <FormItem>
                   <FormLabel>Origen</FormLabel>
                   <FormControl>
-                    <Input placeholder="QUITO" type="text" {...field} />
+                    <Input
+                      placeholder="QUITO"
+                      type="text"
+                      className="placeholder:text-gray-300 dark:placeholder:text-gray-700"
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>Origen del viaje</FormDescription>
                   <FormMessage />
@@ -251,7 +251,7 @@ const AddTripForm = () => {
             />
           </div>
 
-          <div className="col-span-4">
+          <div className="col-span-3">
             <FormField
               control={form.control}
               name="destination"
@@ -259,7 +259,12 @@ const AddTripForm = () => {
                 <FormItem>
                   <FormLabel>Destino</FormLabel>
                   <FormControl>
-                    <Input placeholder="GUAYAQUIL" type="text" {...field} />
+                    <Input
+                      placeholder="GUAYAQUIL"
+                      type="text"
+                      className="placeholder:text-gray-300 dark:placeholder:text-gray-700"
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>Ciudad de destino</FormDescription>
                   <FormMessage />
@@ -267,9 +272,34 @@ const AddTripForm = () => {
               )}
             />
           </div>
+
+          <div className="col-span-3">
+            <FormField
+              control={form.control}
+              name="project"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Proyecto</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="MABE"
+                      type="text"
+                      className="placeholder:text-gray-300 dark:placeholder:text-gray-700"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>A qué proyecto pertenece</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-12 gap-4 items-center">
+          <h3 className="text-gray-400 dark:text-gray-600 font-medium text-xs col-span-12 border-b border-gray-200">
+            Información del Chofer
+          </h3>
           <div className="col-span-4">
             <FormField
               control={form.control}
@@ -278,7 +308,41 @@ const AddTripForm = () => {
                 <FormItem>
                   <FormLabel>Chofer Asignado</FormLabel>
                   <FormControl>
-                    <Input placeholder="17234567890" type="number" {...field} />
+                    <Input
+                      placeholder="17234567890"
+                      type="number"
+                      className="placeholder:text-gray-300 dark:placeholder:text-gray-700"
+                      {...field}
+                      onBlur={async () => {
+                        try {
+                          validarDocumento(field.value.toString());
+                          await getCSRFToken();
+                          const response = await axios.get(
+                            `/personnel?cedula=${field.value}`
+                          );
+                          console.log("Driver: ", response.data.driver);
+                          setDriverInfo(response.data.driver);
+                        } catch (error) {
+                          if (axios.isAxiosError(error) && error.response) {
+                            console.error(
+                              "Error response:",
+                              error.response.data
+                            );
+                            toast.error(
+                              error.response.data.error ||
+                                "Error en la solicitud"
+                            );
+                          } else {
+                            console.error("Error desconocido:", error);
+                            toast.error(
+                              error instanceof Error
+                                ? error.message
+                                : "Error inesperado"
+                            );
+                          }
+                        }
+                      }}
+                    />
                   </FormControl>
                   <FormDescription>
                     Escribe el documento de identidad del chofer asignado
@@ -297,10 +361,12 @@ const AddTripForm = () => {
                 <FormItem className="flex flex-col items-start">
                   <FormLabel>Número de Contacto</FormLabel>
                   <FormControl className="w-full">
-                    <PhoneInput
-                      placeholder="Placeholder"
+                    <Input
+                      placeholder="0987654321"
+                      type="number"
+                      className="placeholder:text-gray-300 dark:placeholder:text-gray-700"
                       {...field}
-                      defaultCountry="EC"
+                      value={driverInfo?.phone ? driverInfo.phone : field.value}
                     />
                   </FormControl>
                   <FormDescription>
@@ -323,7 +389,13 @@ const AddTripForm = () => {
                     <Input
                       placeholder="Marco Aurelio Antonio"
                       type="text"
+                      className=" placeholder:text-gray-200 dark:placeholder:text-gray-700"
                       {...field}
+                      value={
+                        driverInfo?.company_name
+                          ? driverInfo.company_name
+                          : field.value
+                      }
                     />
                   </FormControl>
                   <FormDescription>
@@ -336,7 +408,10 @@ const AddTripForm = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-12 gap-4 items-center">
+          <h3 className="text-gray-400 dark:text-gray-600 font-medium text-xs col-span-12 border-b border-gray-200">
+            Datos del camión
+          </h3>
           <div className="col-span-6">
             <FormField
               control={form.control}
@@ -376,13 +451,13 @@ const AddTripForm = () => {
                           variant="outline"
                           role="combobox"
                           className={cn(
-                            "w-[200px] justify-between",
+                            "w-[200px] justify-between placeholder:text-gray-200 dark:placeholder:text-gray-700",
                             !field.value && "text-muted-foreground"
                           )}
                         >
                           {field.value
-                            ? plateNumbers.find(
-                                (plate) => plate.id === field.value
+                            ? plateNumbers!.find(
+                                (plate) => plate.id.toString() === field.value
                               )?.name
                             : "Selecciona una Placa"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -402,13 +477,17 @@ const AddTripForm = () => {
                                 value={plate.name}
                                 key={plate.id}
                                 onSelect={() => {
-                                  form.setValue("plate_number", plate.id);
+                                  form.setValue(
+                                    "plate_number",
+                                    plate.id.toString()
+                                  );
                                 }}
                               >
                                 <Check
                                   className={cn(
                                     "mr-2 h-4 w-4",
-                                    plate.id === form.watch("plate_number")
+                                    plate.id.toString() ===
+                                      form.watch("plate_number")
                                       ? "opacity-100"
                                       : "opacity-0"
                                   )}
@@ -431,8 +510,11 @@ const AddTripForm = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-4">
+        <div className="grid grid-cols-12 gap-4 items-center">
+          <h3 className="text-gray-400 dark:text-gray-600 font-medium text-xs col-span-12 border-b border-gray-200">
+            Información del GPS
+          </h3>
+          <div className="col-span-4 place-self-center self-center">
             <FormField
               control={form.control}
               name="usuario"
@@ -440,7 +522,12 @@ const AddTripForm = () => {
                 <FormItem>
                   <FormLabel>Usuario</FormLabel>
                   <FormControl>
-                    <Input placeholder="usuario_logex" type="text" {...field} />
+                    <Input
+                      placeholder="usuario_logex"
+                      type="text"
+                      className="placeholder:text-gray-300 dark:placeholder:text-gray-700"
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>
                     Ingresa el usuario del proveedor de gps
@@ -459,7 +546,12 @@ const AddTripForm = () => {
                 <FormItem>
                   <FormLabel>Contraseña</FormLabel>
                   <FormControl>
-                    <Input placeholder="logex_2025" type="text" {...field} />
+                    <Input
+                      placeholder="logex_2025"
+                      type="text"
+                      className="placeholder:text-gray-300 dark:placeholder:text-gray-700"
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>Escribe la clave de acceso</FormDescription>
                   <FormMessage />
@@ -476,7 +568,12 @@ const AddTripForm = () => {
                 <FormItem>
                   <FormLabel>Proveedor de GPS</FormLabel>
                   <FormControl>
-                    <Input placeholder="Traccar" type="text" {...field} />
+                    <Input
+                      placeholder="Traccar"
+                      type="text"
+                      className="placeholder:text-gray-300 dark:placeholder:text-gray-700"
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>
                     Indica el nombre del proveedor
