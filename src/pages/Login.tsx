@@ -8,11 +8,11 @@ export default function LoginPage() {
       <div className="relative hidden bg-slate-950 bg-muted lg:flex h-full w-full">
         <div className="hidden lg:flex lg:flex-col items-center justify-center text-white absolute inset-0">
           <h1 className="font-semibold text-4xl flex flex-row items-center gap-0 -mb-20">
-            Sistema de Monitoreo de{" "}
+            Torre de Control{" "}
             <img
               src={logo}
               alt="Image"
-              className="flex size-52 object-center object-contain dark:brightness-[0.2] dark:grayscale px-4"
+              className="flex size-52 object-center object-contain dark:brightness-[0.2] px-4"
             />
           </h1>
           <small>Impulsado con la tecnología de LogeX</small>

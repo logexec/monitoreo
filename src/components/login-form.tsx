@@ -97,6 +97,7 @@ export function LoginForm({
             type="password"
             required
             name="password"
+            placeholder="Contraseña"
             value={formData.password}
             onChange={handleInputChange}
           />
