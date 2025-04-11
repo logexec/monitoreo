@@ -10,7 +10,6 @@ import {
   AlertCircle,
   X,
   Check,
-  Info,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -35,7 +34,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCSRFToken } from "@/lib/axios";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import CopyToClipboardAlert from "./CopyToClipboardAlert";
 
 interface User {
@@ -178,14 +176,14 @@ const UserManagement: React.FC = () => {
   }, [users, searchTerm]);
 
   return (
-    <div className="w-full bg-white">
+    <div className="w-full bg-white dark:bg-black">
       {/* Notificación */}
       {notification && (
         <div
           className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-md shadow-lg flex items-center ${
             notification.type === "error"
-              ? "bg-red-50 border-l-4 border-red-700 text-red-700"
-              : "bg-slate-50 border-l-4 border-slate-700 text-slate-700"
+              ? "bg-red-50 dark:bg-red-950 border-l-4 border-red-700 text-red-700 dark:border-red-300 dark:text-red-300"
+              : "bg-slate-50 dark:bg-slate-950 border-l-4 border-slate-700 text-slate-700 dark:border-slate-300 dark:text-slate-300"
           }`}
         >
           <div className="mr-3">
@@ -198,7 +196,7 @@ const UserManagement: React.FC = () => {
           <p className="text-sm font-medium">{notification.message}</p>
           <button
             onClick={() => setNotification(null)}
-            className="ml-4 text-slate-500 hover:text-slate-700"
+            className="ml-4 text-slate-500 hover:text-slate-700 dark:text-slate-300"
           >
             <X className="h-4 w-4" />
           </button>
@@ -209,7 +207,7 @@ const UserManagement: React.FC = () => {
         <CardHeader className="pb-4">
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-2xl font-semibold text-slate-800">
+              <CardTitle className="text-2xl font-semibold text-slate-800 dark:text-slate-200">
                 Control de Operadores
               </CardTitle>
               <p className="text-sm text-slate-500 mt-1">
@@ -218,7 +216,7 @@ const UserManagement: React.FC = () => {
             </div>
             <Button
               onClick={handleAddDialogOpen}
-              className="bg-slate-800 hover:bg-slate-700 text-white"
+              className="bg-slate-800 dark:bg-slate-200 hover:bg-slate-700 dark:hover:bg-slate-300 text-white dark:text-black"
             >
               <UserPlus className="h-4 w-4 mr-2" />
               Nuevo Operador
@@ -229,12 +227,12 @@ const UserManagement: React.FC = () => {
         <CardContent>
           <div className="mb-6 flex items-center">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-600 h-4 w-4" />
               <Input
                 type="text"
                 placeholder="Buscar operador..."
                 value={searchTerm}
-                className="pl-10 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+                className="pl-10 border-slate-300 dark:border-slate-700 focus:border-slate-500 focus:ring-slate-500"
                 onChange={(e) => {
                   if (e.target.value.length > 20) return;
                   setSearchTerm(e.target.value);
@@ -242,7 +240,7 @@ const UserManagement: React.FC = () => {
               />
             </div>
             <div className="ml-4">
-              <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-none">
+              <Badge className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 border-none">
                 {filteredUsers.length}{" "}
                 {filteredUsers.length === 1 ? "operador" : "operadores"}
               </Badge>
@@ -251,15 +249,15 @@ const UserManagement: React.FC = () => {
 
           {loading ? (
             <div className="flex justify-center items-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
-              <span className="ml-2 text-slate-600">
+              <Loader2 className="h-8 w-8 animate-spin text-slate-700 dark:text-slate-300" />
+              <span className="ml-2 text-slate-600 dark:text-slate-400">
                 Cargando operadores...
               </span>
             </div>
           ) : (
-            <div className="rounded-md border border-slate-200 overflow-hidden">
-              <div className="min-w-full divide-y divide-slate-200">
-                <div className="bg-slate-50">
+            <div className="rounded-md border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                <div className="bg-slate-50 dark:bg-slate-950">
                   <div className="grid grid-cols-12 px-6 py-3">
                     <div className="col-span-5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Nombre
@@ -272,13 +270,13 @@ const UserManagement: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white divide-y divide-slate-200">
+                <div className="bg-white dark:bg-black divide-y divide-slate-200 dark:divide-slate-800">
                   {filteredUsers.length === 0 ? (
                     <div className="px-6 py-12 text-center">
-                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-4">
-                        <Search className="h-6 w-6 text-slate-400" />
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-900 mb-4">
+                        <Search className="h-6 w-6 text-slate-400 dark:text-slate-600" />
                       </div>
-                      <h3 className="text-sm font-medium text-slate-900">
+                      <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
                         No se encontraron operadores
                       </h3>
                       <p className="mt-1 text-sm text-slate-500">
@@ -289,7 +287,7 @@ const UserManagement: React.FC = () => {
                       {searchTerm && (
                         <button
                           onClick={() => setSearchTerm("")}
-                          className="mt-4 text-sm text-slate-700 hover:text-slate-900 underline"
+                          className="mt-4 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 underline"
                         >
                           Limpiar búsqueda
                         </button>
@@ -300,14 +298,14 @@ const UserManagement: React.FC = () => {
                       {filteredUsers.map((user) => (
                         <div
                           key={user.id}
-                          className="grid grid-cols-12 px-6 py-4 hover:bg-slate-50 transition-colors duration-150"
+                          className="grid grid-cols-12 px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors duration-150"
                         >
                           <div className="col-span-5 flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-medium">
+                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-slate-700 dark:bg-slate-300 flex items-center justify-center text-white dark:text-black font-medium">
                               {user.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-slate-900">
+                              <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                                 {user.name}
                               </div>
                               <div className="text-xs text-slate-500">
@@ -316,7 +314,7 @@ const UserManagement: React.FC = () => {
                             </div>
                           </div>
                           <div className="col-span-5 flex items-center">
-                            <div className="text-sm text-slate-900">
+                            <div className="text-sm text-slate-900 dark:text-slate-100">
                               {user.email}
                             </div>
                           </div>
@@ -324,7 +322,7 @@ const UserManagement: React.FC = () => {
                             <Button
                               variant="outline"
                               size="icon"
-                              className="h-8 w-8 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                              className="h-8 w-8 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-slate-100"
                               onClick={() => handleEditUser(user)}
                             >
                               <Edit2 className="h-4 w-4" />
@@ -332,7 +330,7 @@ const UserManagement: React.FC = () => {
                             <Button
                               variant="outline"
                               size="icon"
-                              className="h-8 w-8 border-slate-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                              className="h-8 w-8 border-slate-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200 dark:border-slate-800 dark:hover:bg-red-950 dark:hover:text-red-300 dark:hover:border-red-800"
                               onClick={() => setDeleteConfirmUser(user)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -353,7 +351,7 @@ const UserManagement: React.FC = () => {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-slate-800">
+            <DialogTitle className="text-xl font-semibold text-slate-800 dark:text-slate-200">
               Añadir Nuevo Operador
             </DialogTitle>
             <DialogDescription className="text-slate-500">
@@ -365,7 +363,7 @@ const UserManagement: React.FC = () => {
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-slate-700 mb-1"
+                className="block text-sm font-medium  dark:text-slate-300 mb-1"
               >
                 Nombre completo
               </label>
@@ -375,13 +373,13 @@ const UserManagement: React.FC = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Nombre del operador"
-                className="w-full border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+                className="w-full border-slate-300 dark:border-slate-700 focus:border-slate-500 focus:ring-slate-500"
               />
             </div>
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-700 mb-1"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
                 Email
               </label>
@@ -391,28 +389,21 @@ const UserManagement: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="correo@ejemplo.com"
-                className="w-full border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+                className="w-full border-slate-300 dark:border-slate-700 focus:border-slate-500 focus:ring-slate-500"
               />
             </div>
           </div>
           <CopyToClipboardAlert />
           <DialogFooter>
-            {/* <Alert>
-              <Info className="h-4 w-4" />
-              <AlertTitle>Recuerda</AlertTitle>
-              <AlertDescription>
-                La contraseña por defecto de cada usuario es Monitoreo2025
-              </AlertDescription>
-            </Alert> */}
             <Button
               variant="outline"
-              className="border-slate-300 text-slate-700 hover:bg-slate-100"
+              className="border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900"
               onClick={() => setIsAddDialogOpen(false)}
             >
               Cancelar
             </Button>
             <Button
-              className="bg-slate-800 hover:bg-slate-700 text-white ml-2"
+              className="bg-slate-800 hover:bg-slate-700 text-white dark:bg-slate-200 dark:hover:bg-slate-300 dark:text-black ml-2"
               onClick={addUser}
               disabled={submitting}
             >
@@ -439,7 +430,7 @@ const UserManagement: React.FC = () => {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-slate-800">
+            <DialogTitle className="text-xl font-semibold text-slate-800 dark:text-slate-200">
               Editar Operador
             </DialogTitle>
             <DialogDescription className="text-slate-500">
@@ -450,7 +441,7 @@ const UserManagement: React.FC = () => {
             <div>
               <label
                 htmlFor="edit-name"
-                className="block text-sm font-medium text-slate-700 mb-1"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
                 Nombre completo
               </label>
@@ -459,13 +450,13 @@ const UserManagement: React.FC = () => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+                className="w-full border-slate-300 dark:border-slate-700 focus:border-slate-500 focus:ring-slate-500"
               />
             </div>
             <div>
               <label
                 htmlFor="edit-email"
-                className="block text-sm font-medium text-slate-700 mb-1"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
                 Email
               </label>
@@ -474,20 +465,20 @@ const UserManagement: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+                className="w-full border-slate-300 dark:border-slate-700 focus:border-slate-500 focus:ring-slate-500"
               />
             </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              className="border-slate-300 text-slate-700 hover:bg-slate-100"
+              className="border-slate-300 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900"
               onClick={() => setEditingUser(null)}
             >
               Cancelar
             </Button>
             <Button
-              className="bg-slate-800 hover:bg-slate-700 text-white ml-2"
+              className="bg-slate-800 hover:bg-slate-700 text-white dark:bg-slate-200 dark:hover:bg-slate-300 dark:text-black ml-2"
               onClick={updateUser}
               disabled={submitting}
             >
@@ -514,7 +505,7 @@ const UserManagement: React.FC = () => {
       >
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-red-700">
+            <AlertDialogTitle className="text-red-700 dark:text-red-300">
               ¿Eliminar operador?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-slate-500">
@@ -523,13 +514,13 @@ const UserManagement: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteConfirmUser && (
-            <div className="my-2 p-4 bg-slate-50 rounded-md">
+            <div className="my-2 p-4 bg-slate-50 dark:bg-slate-950 rounded-md">
               <div className="flex items-center">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-700 font-medium">
+                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 font-medium">
                   {deleteConfirmUser.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-slate-900">
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
                     {deleteConfirmUser.name}
                   </p>
                   <p className="text-xs text-slate-500">
@@ -540,11 +531,11 @@ const UserManagement: React.FC = () => {
             </div>
           )}
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-slate-300 text-slate-700 hover:bg-slate-100">
+            <AlertDialogCancel className="border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-700 hover:bg-red-800 text-white"
+              className="bg-red-700 hover:bg-red-800 text-white dark:bg-red-300 dark:hover:bg-red-100 dark:text-black"
               onClick={deleteUser}
               disabled={submitting}
             >
