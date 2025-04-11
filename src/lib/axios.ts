@@ -1,3 +1,4 @@
+import { User } from "@/types/database";
 import axios from "axios";
 import Cookies from "js-cookie";
 
@@ -136,5 +137,16 @@ export async function logout() {
     console.error("Error al cerrar sesión:", error);
   }
 }
+
+export const getUsers = async (): Promise<User[]> => {
+  try {
+    await getCSRFToken();
+    const response = axios.get("/users");
+    return (await response).data;
+  } catch (error) {
+    console.error("Error al obtener los usuarios:", error);
+    throw new Error("No fue posible obtener los usuarios");
+  }
+};
 
 export default axios;

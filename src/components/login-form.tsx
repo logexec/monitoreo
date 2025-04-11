@@ -37,7 +37,7 @@ export function LoginForm({
       toast.success(
         `¡Hola, ${
           response.data.user.name.split(" ")[0]
-        }, el Sistema de Monitoreo te da la bienvenida.`
+        }, la Torre de Control te da la bienvenida.`
       );
       navigate("/");
     } catch (error: any) {

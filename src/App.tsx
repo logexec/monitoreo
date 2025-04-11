@@ -10,6 +10,8 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import LoginPage from "./pages/Login";
 import { AuthProvider } from "./contexts/AuthContext";
 import { RequireAuth } from "./components/RequireAuth";
+import UsersPage from "./pages/UsersPage";
+import GPSHistoryPage from "./pages/GPSHistoryPage";
 
 export function App() {
   return (
@@ -29,10 +31,17 @@ export function App() {
                   </RequireAuth>
                 }
               >
+                {/* Administración */}
+                <Route path="/users" element={<UsersPage />} />
+
+                {/* Viajes */}
                 <Route index element={<TripList />} />
                 <Route path="/new-trip" element={<AddPage />} />
                 <Route path="/upload" element={<UploadPage />} />
                 <Route path="/updates" element={<UpdatesPage />} />
+
+                {/* GPS */}
+                <Route path="/gps-history" element={<GPSHistoryPage />} />
               </Route>
             </Route>
           </Routes>

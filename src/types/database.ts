@@ -90,3 +90,14 @@ export interface TripMetadata {
   created_at: string;
   updated_at: string;
 }
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+// interface Column {
+//   Header: string;
+//   accessor: keyof User;
+// }
