@@ -1015,9 +1015,9 @@ export const AlertHistory: React.FC = () => {
     }
 
     return (
-      <div className="overflow-hidden border border-slate-200 rounded-md">
-        <div className="min-w-full divide-y divide-slate-200">
-          <div className="bg-slate-50">
+      <div className="overflow-hidden border border-slate-200 dark:border-slate-800 rounded-md">
+        <div className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+          <div className="bg-slate-50 dark:bg-slate-950">
             <div className="grid grid-cols-12 px-6 py-3">
               <div className="col-span-5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Detalles de la alerta
@@ -1033,17 +1033,19 @@ export const AlertHistory: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white divide-y divide-slate-200">
+          <div className="bg-white dark:bg-black divide-y divide-slate-200 dark:divide-slate-800">
             {filteredAlerts.map((alert) => (
               <div
                 key={alert.id}
-                className={`grid grid-cols-12 px-6 py-4 hover:bg-slate-50 cursor-pointer ${
-                  !alert.resolved ? "border-l-4 border-red-700" : ""
+                className={`grid grid-cols-12 px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-950 cursor-pointer ${
+                  !alert.resolved
+                    ? "border-l-4 border-red-700 dark:border-red-300"
+                    : ""
                 }`}
                 onClick={() => handleAlertClick(alert)}
               >
                 <div className="col-span-5 flex items-center">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
                     {getAlertTypeIcon(alert.type || "")}
                   </div>
                   <div className="ml-4">
@@ -1062,7 +1064,7 @@ export const AlertHistory: React.FC = () => {
                     <div className="text-xs text-slate-500 mt-1">
                       {formatTimestamp(alert.timestamp || "")}
                     </div>
-                    <div className="text-sm text-slate-700 mt-1 line-clamp-2">
+                    <div className="text-sm text-slate-700 dark:text-slate-300 mt-1 line-clamp-2">
                       {alert.description || "Sin descripción"}
                     </div>
                   </div>
@@ -1078,7 +1080,7 @@ export const AlertHistory: React.FC = () => {
                   </div>
                 </div>
                 <div className="col-span-2 flex items-center">
-                  <div className="text-sm text-slate-700 line-clamp-2 text-ellipsis">
+                  <div className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2 text-ellipsis">
                     {alert.location?.address || "Ubicación desconocida"}
                   </div>
                 </div>
@@ -1087,8 +1089,8 @@ export const AlertHistory: React.FC = () => {
                     className={`
                     ${
                       alert.resolved
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
+                        ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+                        : "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
                     }
                   `}
                   >
