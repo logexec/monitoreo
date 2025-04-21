@@ -125,13 +125,6 @@ export function TripList() {
           ? Array.from(selectedTrips)
           : [selectedTrip?.id].filter(Boolean);
 
-      // const { error } = await supabase
-      //   .from("trips")
-      //   .delete()
-      //   .in("id", tripsToDelete);
-
-      // if (error) throw error;
-
       setTrips(trips.filter((trip) => !tripsToDelete.includes(trip.id)));
       setSelectedTrips(new Set());
       setSelectedTrip(null);
@@ -156,19 +149,39 @@ export function TripList() {
     }));
   };
 
+  const normalizedSearch = search.trim().toLowerCase();
+
   const filteredTrips = trips.filter((trip) => {
     const matchesSearch =
-      trip.system_trip_id.toLowerCase().includes(search.toLowerCase()) ||
-      (trip.external_trip_id?.toLowerCase() || "").includes(
-        search.toLowerCase()
-      ) ||
-      trip.driver_name.toLowerCase().includes(search.toLowerCase());
+      trip.system_trip_id.toLowerCase().includes(normalizedSearch) ||
+      (trip.external_trip_id?.toLowerCase() || "").includes(normalizedSearch) ||
+      trip.driver_name.toLowerCase().includes(normalizedSearch) ||
+      trip.driver_document?.includes(normalizedSearch) ||
+      trip.destination.toLowerCase().includes(normalizedSearch) ||
+      trip.delivery_date.includes(normalizedSearch) ||
+      trip.driver_phone?.includes(normalizedSearch) ||
+      trip.plate_number.toLowerCase().includes(normalizedSearch) ||
+      trip.current_status_update.toLowerCase().includes(normalizedSearch) ||
+      trip.project.toLowerCase().includes(normalizedSearch);
+
     const matchesStatus =
-      statusFilter === "all" || trip.updates?.[0]?.category === statusFilter; // Usa updates directamente
+      statusFilter === "all" || trip.updates?.[0]?.category === statusFilter;
+
     const matchesProject =
       projectFilter === "all" || trip.project === projectFilter;
 
-    return matchesSearch && matchesProject && matchesStatus;
+    const matchesDate = trip.delivery_date.includes(normalizedSearch);
+
+    const matchesStatusUpdate =
+      trip.current_status_update.includes(normalizedSearch);
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesProject &&
+      matchesDate &&
+      matchesStatusUpdate
+    );
   });
 
   const sortedTrips = sortTrips(filteredTrips, sortConfig) || [];
@@ -295,6 +308,15 @@ export function TripList() {
                 <SortableHeader
                   label="Estado"
                   field="status_category"
+                  currentField={sortConfig.field}
+                  direction={sortConfig.direction}
+                  onSort={handleSort}
+                />
+              </th>
+              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
+                <SortableHeader
+                  label="Novedad"
+                  field="current_status_update"
                   currentField={sortConfig.field}
                   direction={sortConfig.direction}
                   onSort={handleSort}

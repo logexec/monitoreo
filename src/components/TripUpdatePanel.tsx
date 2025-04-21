@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState } from "react";
 import { X, Upload } from "lucide-react";
 import { Trip, TripUpdate, UpdateCategory } from "../types/database";
@@ -5,6 +6,7 @@ import { updateCategoryLabels } from "../constants/updateCategories";
 import { motion } from "motion/react";
 import { updateTrip, uploadImage } from "@/lib/axios";
 import { toast } from "sonner";
+import { TripProgressDialog } from "./ui/trip-progress-dialog";
 
 interface TripUpdatePanelProps {
   trip: Trip | Trip[];
@@ -22,6 +24,14 @@ export function TripUpdatePanel({
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Estados para el dialogo de actualización
+  const [showProgress, setShowProgress] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [completed, setCompleted] = useState(false);
+  const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [_open, setOpen] = useState(false);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -47,41 +57,68 @@ export function TripUpdatePanel({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setShowProgress(true);
+    setProgress(0);
+    setCompleted(false);
+    setError(false);
 
     try {
       const trips = Array.isArray(trip) ? trip : [trip];
-      const updates = [];
+      const updates: TripUpdate[] = [];
 
-      // Subir imagen si se proporciona
       const imageUrl = file ? await uploadImage(file) : null;
 
-      // Crear actualizaciones para todos los viajes seleccionados
-      for (const t of trips) {
-        const data = await updateTrip(
-          t.id,
-          category,
-          notes,
-          imageUrl || undefined
-        );
-        if (data) updates.push(data as TripUpdate);
+      for (const [index, t] of trips.entries()) {
+        try {
+          const data = await updateTrip(
+            t.id,
+            category,
+            notes,
+            imageUrl || undefined
+          );
+          if (data) {
+            updates.push(data as TripUpdate);
+          }
+          setProgress(index + 1); // Actualiza el progreso
+        } catch (err) {
+          // Extraer el mensaje de error
+          const errorMessage =
+            err instanceof Error ? err.message : "Error desconocido";
+          console.error("Error con viaje ID:", t.id, err);
+          setError(true);
+          setErrorMessage(errorMessage); // Actualizar el estado con el mensaje
+          toast.error(errorMessage); // Mostrar el mensaje de error específico
+          break; // Detener el proceso si ocurre un error
+        }
       }
 
-      updates.forEach((update) => {
-        if (onUpdateCreated) {
-          onUpdateCreated(update);
-        }
-      });
+      if (!error) {
+        updates.forEach((update) => {
+          if (onUpdateCreated) {
+            onUpdateCreated(update);
+          }
+        });
 
-      const message =
-        trips.length > 1
-          ? `Actualización registrada para ${trips.length} viajes`
-          : "Actualización registrada exitosamente";
+        toast.success(
+          trips.length > 1
+            ? `Actualización registrada para ${trips.length} viajes`
+            : "Actualización registrada exitosamente"
+        );
 
-      toast.success(message);
-      onClose();
+        setCompleted(true);
+        setTimeout(() => {
+          setShowProgress(false);
+          onClose();
+        }, 1500); // Cierre automático tras éxito
+      }
     } catch (error) {
+      // Manejar errores generales (no específicos de un viaje)
+      const errorMessage =
+        error instanceof Error ? error.message : "Error desconocido";
       console.error("Error al crear actualización:", error);
-      toast.error("Error al registrar la actualización");
+      setError(true);
+      setErrorMessage(errorMessage);
+      toast.error(errorMessage); // Mostrar el mensaje de error específico
     } finally {
       setIsSubmitting(false);
     }
@@ -94,6 +131,16 @@ export function TripUpdatePanel({
       transition={{ duration: 0.25 }}
       className="fixed inset-y-0 right-0 w-[500px] bg-white dark:bg-black shadow-2xl z-50 border-l"
     >
+      <TripProgressDialog
+        open={showProgress}
+        progress={progress}
+        total={Array.isArray(trip) ? trip.length : 1}
+        completed={completed}
+        error={error}
+        errorMessage={errorMessage}
+        onClose={() => setOpen(false)}
+      />
+
       <div className="h-full flex flex-col">
         <div className="px-6 py-2 border-b bg-gray-200 dark:bg-gray-800">
           <div className="flex items-center justify-between mb-2">

@@ -32,6 +32,7 @@ export interface Trip {
   shift: string;
   gps_provider: string | null;
   current_status: TripStatus;
+  current_status_update: UpdateCategory;
   created_at: string;
   updated_at: string;
   updates: TripUpdate[];

@@ -8,10 +8,10 @@ import { Toaster } from "@/components/ui/sonner";
 import Sidebar from "./components/Sidebar";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import LoginPage from "./pages/Login";
-import { AuthProvider } from "./contexts/AuthContext";
 import { RequireAuth } from "./components/RequireAuth";
 import UsersPage from "./pages/UsersPage";
 import GPSHistoryPage from "./pages/GPSHistoryPage";
+import { AuthProvider } from "./contexts/AuthContext";
 
 export function App() {
   return (

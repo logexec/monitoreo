@@ -5,6 +5,8 @@ import { Trip, TripUpdate } from "../types/database";
 import { StatusBadge } from "./StatusBadge";
 import { TripUpdatesList } from "./TripUpdatesList";
 import { LastUpdateCell } from "./LastUpdateCell";
+import { StatusOption } from "./StatusOption";
+import { statusLabels } from "@/constants/statusMappings";
 
 interface ExpandableRowProps {
   trip: Trip;
@@ -26,6 +28,15 @@ export function ExpandableRow({
   onTripSelect,
   updates,
 }: ExpandableRowProps) {
+  // Sort updates by created_at in descending order
+  const sortedUpdates = [...updates].sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
+  // Get the latest update
+  const latestUpdate = sortedUpdates[0];
+
   return (
     <>
       <tr className="hover:bg-gray-50 dark:bg-black dark:hover:bg-gray-950">
@@ -63,11 +74,6 @@ export function ExpandableRow({
           onClick={() => onTripSelect(trip)}
         >
           {trip.system_trip_id}
-          {/* {trip.external_trip_id && (
-            <span className="ml-2 text-xs text-gray-500">
-              ({trip.external_trip_id})
-            </span>
-          )} */}
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
           {format(new Date(trip.delivery_date), "dd/MM/yyyy")}
@@ -88,24 +94,34 @@ export function ExpandableRow({
           {trip.project}
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm">
-          {updates[0]?.category ? (
-            <StatusBadge category={updates[0].category} />
+          {latestUpdate?.category ? (
+            <StatusOption
+              status={trip.current_status}
+              label={statusLabels[trip.current_status]}
+            />
           ) : (
             <span className="text-gray-400 dark:text-gray-600">—</span>
           )}
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm">
-          <LastUpdateCell updates={updates} />
+          {latestUpdate?.category ? (
+            <StatusBadge category={latestUpdate.category} />
+          ) : (
+            <span className="text-gray-400 dark:text-gray-600">—</span>
+          )}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm">
+          <LastUpdateCell updates={sortedUpdates} />
         </td>
       </tr>
-      {updates.length > 0 && isExpanded && (
+      {sortedUpdates.length > 0 && isExpanded && (
         <tr>
           <td colSpan={11} className="px-6 py-4 bg-gray-50 dark:bg-gray-950">
-            <TripUpdatesList updates={updates} />
+            <TripUpdatesList updates={sortedUpdates} />
           </td>
         </tr>
       )}
-      {isExpanded && updates.length === 0 && (
+      {isExpanded && sortedUpdates.length === 0 && (
         <tr>
           <td
             colSpan={11}

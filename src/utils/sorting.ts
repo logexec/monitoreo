@@ -20,6 +20,14 @@ export function sortTrips(
         : categoryB.localeCompare(categoryA);
     }
 
+    if (field === "current_status_update") {
+      const categoryA = a.updates?.[0]?.category || "";
+      const categoryB = b.updates?.[0]?.category || "";
+      return direction === "asc"
+        ? categoryA.localeCompare(categoryB)
+        : categoryB.localeCompare(categoryA);
+    }
+
     if (field === "last_update") {
       const lastUpdateA = a.updates?.[0]?.created_at || "";
       const lastUpdateB = b.updates?.[0]?.created_at || "";

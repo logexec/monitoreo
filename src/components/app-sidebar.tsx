@@ -11,31 +11,12 @@ import {
 } from "@/components/ui/sidebar";
 import logo from "@/assets/logex_logo.png";
 import { Link } from "react-router-dom";
-import { getUser } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [user, setUser] = React.useState<{
-    name: string;
-    email: string;
-  } | null>(null);
+  const { user, isLoading } = useAuth();
 
-  React.useEffect(() => {
-    async function fetchUser() {
-      const authenticatedUser = await getUser();
-      if (authenticatedUser) {
-        setUser({
-          name: authenticatedUser.name,
-          email: authenticatedUser.email,
-        });
-      } else {
-        window.location.href = "/login"; // Redirige si no está autenticado
-      }
-    }
-
-    fetchUser();
-  }, []);
-
-  if (!user) return null; // No renderiza nada hasta obtener los datos
+  if (isLoading || !user) return null; // No renderiza nada hasta obtener los datos
 
   return (
     <Sidebar collapsible="icon" {...props} className="z-40">
@@ -61,8 +42,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               isActive: true,
               items: [
                 { title: "Lista de viajes", url: "/" },
-                { title: "Nuevo viaje", url: "/new-trip" },
-                { title: "Cargar viajes (Excel)", url: "/upload" },
+                // { title: "Nuevo viaje", url: "/new-trip" },
+                // { title: "Cargar viajes (Excel)", url: "/upload" },
                 { title: "Historial", url: "/updates" },
               ],
             },

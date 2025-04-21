@@ -2,7 +2,7 @@ import { User } from "@/types/database";
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const sanctumCsrfUrl = `${import.meta.env.VITE_SANCTUM_CSRF_URL}`;
+const sanctumCsrfUrl = import.meta.env.VITE_SANCTUM_CSRF_URL;
 
 // Configuración global de Axios
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
@@ -65,6 +65,7 @@ export async function addTrips(
     clave?: string;
     gps_provider?: string;
     current_status?: string;
+    current_status_update?: string;
   }>
 ) {
   try {
@@ -91,11 +92,21 @@ export async function updateTrip(
       notes,
       image_url: imageUrl || null,
     });
-
     return response.data;
   } catch (error) {
-    console.error("Error al actualizar el viaje:", error);
-    throw error;
+    // Verificar si es un error de Axios con respuesta
+    if (axios.isAxiosError(error) && error.response) {
+      const errorMessage =
+        error.response.data.message ||
+        "Error desconocido al actualizar el viaje";
+      console.error("Error al actualizar el viaje:", errorMessage, error);
+      // Lanzar un nuevo error con el mensaje específico
+      throw new Error(errorMessage);
+    } else {
+      // Otros tipos de errores (p.ej., problemas de red)
+      console.error("Error al actualizar el viaje:", error);
+      throw new Error("No se pudo conectar con el servidor");
+    }
   }
 }
 

@@ -8,10 +8,10 @@ import { SearchInput } from "../components/SearchInput";
 import { StatusFilter } from "../components/StatusFilter";
 import { sortUpdates } from "../utils/updateSorting";
 import { SortConfig } from "../types/sorting";
-import { useAuth } from "@/contexts/AuthContext";
 import Loading from "@/components/Loading";
 import axios from "axios";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Interfaz extendida solo para UpdatesPage
 interface ExtendedTripUpdate extends TripUpdate {

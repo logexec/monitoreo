@@ -1,7 +1,9 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
 import { getUser } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import Loading from "@/components/Loading";
+import Cookies from "js-cookie";
 
 interface AuthContextType {
   user: { name: string; email: string } | null;
@@ -27,6 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Cargar usuario inicial
   useEffect(() => {
+    const token = Cookies.get("jwt-token"); // o js-cookie
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
     async function fetchUser() {
       const authenticatedUser = await getUser();
       setUser(authenticatedUser);

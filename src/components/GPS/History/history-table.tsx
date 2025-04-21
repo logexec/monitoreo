@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import {
   Search,
@@ -767,7 +768,7 @@ export const AlertHistory: React.FC = () => {
         <DialogContent className="sm:max-w-lg">
           {selectedAlert && (
             <>
-              {console.log(selectedAlert)}
+              {/* {console.log(selectedAlert)} */}
               <DialogHeader>
                 <div className="flex items-center">
                   {getAlertTypeIcon(selectedAlert.type || "")}
