@@ -115,34 +115,36 @@ export function ExpandableRow({
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[180px]">
           <ul>
-            {trip.gps_devices.map((devices) => (
-              <li key={devices.id}>
-                {devices.uri_gps ? (
-                  <div className="flex flex-col">
-                    <a
-                      href={devices.uri_gps}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-red-600 visited:text-red-400 dark:visited:text-red-600 dark:text-red-400 underline underline-offset-2 text-sm text-center"
-                    >
-                      {devices.gps_provider}
-                    </a>
-                    <div className="grid grid-cols-[auto_auto] gap-2 text-xs">
-                      <span>Usuario:</span>
-                      <span>{devices.user || "N/A"}</span>
-                    </div>
-                    <div className="grid grid-cols-[auto_auto] gap-6 text-xs">
-                      <span>Clave: </span>
-                      <span>{devices.password || "N/A"}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <span className="text-gray-400 dark:text-gray-600 text-center">
-                    {devices.gps_provider || "No provisto"}
-                  </span>
-                )}
-              </li>
-            ))}
+            {trip.gps_devices
+              ? trip.gps_devices.map((devices) => (
+                  <li key={devices.id}>
+                    {devices.uri_gps ? (
+                      <div className="flex flex-col">
+                        <a
+                          href={devices.uri_gps}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-red-600 visited:text-red-400 dark:visited:text-red-600 dark:text-red-400 underline underline-offset-2 text-sm text-center"
+                        >
+                          {devices.gps_provider}
+                        </a>
+                        <div className="grid grid-cols-[auto_auto] gap-2 text-xs">
+                          <span>Usuario:</span>
+                          <span>{devices.user || "N/A"}</span>
+                        </div>
+                        <div className="grid grid-cols-[auto_auto] gap-6 text-xs">
+                          <span>Clave: </span>
+                          <span>{devices.password || "N/A"}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 dark:text-gray-600 text-center">
+                        {devices.gps_provider || "No provisto"}
+                      </span>
+                    )}
+                  </li>
+                ))
+              : "—"}
           </ul>
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm">
