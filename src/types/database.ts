@@ -15,6 +15,15 @@ export type UpdateCategory =
   | "VIAJE_CARGADO"
   | "VIAJE_FINALIZADO";
 
+export interface GPSDevices {
+  id: number;
+  trip_id: string;
+  gps_provider: string;
+  uri_gps: string;
+  user: string;
+  password: string;
+}
+
 export interface Trip {
   id: string;
   trip_id: string;
@@ -30,12 +39,13 @@ export interface Trip {
   plate_number: string;
   property_type: string;
   shift: string;
-  gps_provider: string | null;
+  gps_devices: GPSDevices[];
   current_status: TripStatus;
   current_status_update: UpdateCategory;
   created_at: string;
   updated_at: string;
   updates: TripUpdate[];
+  vehicle_id: number;
 }
 
 export interface TripUpdate {
