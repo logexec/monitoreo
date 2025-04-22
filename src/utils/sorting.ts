@@ -53,6 +53,16 @@ export function sortTrips(
     valueA = valueA ?? "";
     valueB = valueB ?? "";
 
+    // Check if values are dates
+    const dateA = Date.parse(String(valueA));
+    const dateB = Date.parse(String(valueB));
+    const isDate = !isNaN(dateA) && !isNaN(dateB);
+
+    if (isDate) {
+      // Sort as dates
+      return direction === "asc" ? dateA - dateB : dateB - dateA;
+    }
+
     // Check if values are numbers
     const numA = Number(valueA);
     const numB = Number(valueB);
@@ -61,14 +71,14 @@ export function sortTrips(
     if (isNumeric) {
       // Sort numerically
       return direction === "asc" ? numA - numB : numB - numA;
-    } else {
-      // Sort as strings
-      const strA = String(valueA).toLowerCase();
-      const strB = String(valueB).toLowerCase();
-      return direction === "asc"
-        ? strA.localeCompare(strB)
-        : strB.localeCompare(strA);
     }
+
+    // Sort as strings
+    const strA = String(valueA).toLowerCase();
+    const strB = String(valueB).toLowerCase();
+    return direction === "asc"
+      ? strA.localeCompare(strB)
+      : strB.localeCompare(strA);
   });
 }
 
