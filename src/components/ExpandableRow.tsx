@@ -75,22 +75,25 @@ export function ExpandableRow({
         >
           {trip.system_trip_id}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
           {format(new Date(trip.delivery_date), "dd/MM/yyyy")}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
           {trip.plate_number}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[140px]">
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+          {trip.vehicle_id}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 min-w-[140px]">
           {trip.driver_name}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
           {trip.origin || "—"}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
           {trip.destination}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
           {trip.project}
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -109,6 +112,38 @@ export function ExpandableRow({
           ) : (
             <span className="text-gray-400 dark:text-gray-600">—</span>
           )}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[180px]">
+          <ul>
+            {trip.gps_devices.map((devices) => (
+              <li key={devices.id}>
+                {devices.uri_gps ? (
+                  <div className="flex flex-col">
+                    <a
+                      href={devices.uri_gps}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-red-600 visited:text-red-400 dark:visited:text-red-600 dark:text-red-400 underline underline-offset-2 text-sm text-center"
+                    >
+                      {devices.gps_provider}
+                    </a>
+                    <div className="grid grid-cols-[auto_auto] gap-2 text-xs">
+                      <span>Usuario:</span>
+                      <span>{devices.user || "N/A"}</span>
+                    </div>
+                    <div className="grid grid-cols-[auto_auto] gap-6 text-xs">
+                      <span>Clave: </span>
+                      <span>{devices.password || "N/A"}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-gray-400 dark:text-gray-600 text-center">
+                    {devices.gps_provider || "No provisto"}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm">
           <LastUpdateCell updates={sortedUpdates} />

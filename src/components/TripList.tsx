@@ -278,6 +278,15 @@ export function TripList() {
               </th>
               <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
                 <SortableHeader
+                  label="Vehículo"
+                  field="vehicle_id"
+                  currentField={sortConfig.field}
+                  direction={sortConfig.direction}
+                  onSort={handleSort}
+                />
+              </th>
+              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
+                <SortableHeader
                   label="Conductor"
                   field="driver_name"
                   currentField={sortConfig.field}
@@ -317,6 +326,15 @@ export function TripList() {
                 <SortableHeader
                   label="Novedad"
                   field="current_status_update"
+                  currentField={sortConfig.field}
+                  direction={sortConfig.direction}
+                  onSort={handleSort}
+                />
+              </th>
+              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left min-w-[140px]">
+                <SortableHeader
+                  label="Proveedor GPS"
+                  field="gps_provider"
                   currentField={sortConfig.field}
                   direction={sortConfig.direction}
                   onSort={handleSort}
