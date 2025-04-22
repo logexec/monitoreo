@@ -37,14 +37,26 @@ export function TripList() {
     const fetchTrips = async () => {
       setIsLoading(true);
       try {
-        const response = await getTrips(
+        const currentDate =
           selectedValue === "on"
             ? new Date().toISOString().slice(0, 10)
-            : undefined
+            : undefined;
+        const response = await getTrips(currentDate);
+
+        setTrips(
+          response.map((trip: Trip) => ({
+            ...trip,
+            updates: trip.updates ?? [],
+            gps_devices: trip.gps_devices ?? [],
+          }))
         );
-        setTrips(response);
       } catch (error) {
-        console.error(error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Se produjo un error al tratar de recuperar los viajes"
+        );
+        console.error("Error en fetchTrips:", error);
       } finally {
         setIsLoading(false);
       }
@@ -167,21 +179,7 @@ export function TripList() {
     const matchesStatus =
       statusFilter === "all" || trip.updates?.[0]?.category === statusFilter;
 
-    const matchesProject =
-      projectFilter === "all" || trip.project === projectFilter;
-
-    const matchesDate = trip.delivery_date.includes(normalizedSearch);
-
-    const matchesStatusUpdate =
-      trip.current_status_update.includes(normalizedSearch);
-
-    return (
-      matchesSearch &&
-      matchesStatus &&
-      matchesProject &&
-      matchesDate &&
-      matchesStatusUpdate
-    );
+    return matchesSearch && matchesStatus;
   });
 
   const sortedTrips = sortTrips(filteredTrips, sortConfig) || [];
