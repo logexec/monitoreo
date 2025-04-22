@@ -252,7 +252,7 @@ export function TripList() {
               <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
                 <SortableHeader
                   label="ID Viaje"
-                  field="trip_id"
+                  field="system_trip_id"
                   currentField={sortConfig.field}
                   direction={sortConfig.direction}
                   onSort={handleSort}
@@ -295,14 +295,22 @@ export function TripList() {
                 />
               </th>
               <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                <span className="text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Origen
-                </span>
+                <SortableHeader
+                  label="Origen"
+                  field="origin"
+                  currentField={sortConfig.field}
+                  direction={sortConfig.direction}
+                  onSort={handleSort}
+                />
               </th>
               <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                <span className="text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Destino
-                </span>
+                <SortableHeader
+                  label="destino"
+                  field="destination"
+                  currentField={sortConfig.field}
+                  direction={sortConfig.direction}
+                  onSort={handleSort}
+                />
               </th>
               <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
                 <SortableHeader

@@ -54,7 +54,7 @@ export function ExpandableRow({
             onClick={(e) => e.stopPropagation()}
           />
         </td>
-        <td className="px-2">
+        <td className="px-2 max-w-[2ch]">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -70,22 +70,22 @@ export function ExpandableRow({
           </button>
         </td>
         <td
-          className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer"
+          className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer text-start max-w-[18ch]"
           onClick={() => onTripSelect(trip)}
         >
           {trip.system_trip_id}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 max-w-[10ch] text-start">
           {format(new Date(trip.delivery_date), "dd/MM/yyyy")}
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-          {trip.plate_number}
+          {trip.plate_number.slice(0, 3)}-{trip.plate_number.slice(3)}
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-          {trip.vehicle_id}
+          {trip.vehicle_id || "—"}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 min-w-[140px]">
-          {trip.driver_name}
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 min-w-[140px] !capitalize">
+          {trip.driver_name.toLowerCase()}
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
           {trip.origin || "—"}
