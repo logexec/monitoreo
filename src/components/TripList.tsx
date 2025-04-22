@@ -193,7 +193,7 @@ export function TripList() {
   const uniqueProjects = [...new Set(trips.map((trip) => trip.project))].sort();
 
   return (
-    <div className="space-y-4 p-5">
+    <div className="space-y-4 p-5 max-w-[1550px] mx-auto">
       <div className="flex gap-4">
         <div className="flex-1">
           <SearchInput
@@ -232,7 +232,7 @@ export function TripList() {
         <StatusFilter value={statusFilter} onChange={setStatusFilter} />
       </div>
 
-      <div className="bg-white dark:bg-black rounded-lg shadow overflow-x-auto relative max-h-[calc(100vh-220px)]">
+      <div className="bg-white dark:bg-black rounded-lg shadow overflow-x-auto relative max-h-[calc(100vh-190px)]">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead className="bg-gray-800">
             <tr>
