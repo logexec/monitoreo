@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Cargar usuario inicial
   useEffect(() => {
-    const token = Cookies.get("jwt-token"); // o js-cookie
+    const token = Cookies.get("XSRF-TOKEN"); // Token de autenticación
     if (!token) {
       setIsLoading(false);
       return;
