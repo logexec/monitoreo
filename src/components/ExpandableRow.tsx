@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Trip, TripUpdate } from "../types/database";
 import { StatusBadge } from "./StatusBadge";
@@ -7,6 +7,8 @@ import { TripUpdatesList } from "./TripUpdatesList";
 import { LastUpdateCell } from "./LastUpdateCell";
 import { StatusOption } from "./StatusOption";
 import { statusLabels } from "@/constants/statusMappings";
+import { Tooltip, TooltipContent, TooltipProvider } from "./ui/tooltip";
+import { TooltipTrigger } from "@radix-ui/react-tooltip";
 
 interface ExpandableRowProps {
   trip: Trip;
@@ -69,32 +71,45 @@ export function ExpandableRow({
             )}
           </button>
         </td>
-        <td
-          className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer text-start max-w-[18ch]"
-          onClick={() => onTripSelect(trip)}
-        >
-          {trip.system_trip_id}
+        <td onClick={() => onTripSelect(trip)} className="pl-6">
+          <TooltipProvider>
+            <Tooltip delayDuration={200}>
+              <TooltipTrigger className="py-0.5 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer text-start truncate max-w-[18ch]">
+                {trip.system_trip_id}
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                {trip.system_trip_id}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 max-w-[10ch] text-start">
-          {format(new Date(trip.delivery_date), "dd/MM/yyyy")}
+        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 max-w-[10ch]">
+          {format(parseISO(trip.delivery_date), "dd/MM/yyyy")}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
           {trip.plate_number.slice(0, 3)}-{trip.plate_number.slice(3)}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+        <td className="py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 text-center">
           {trip.vehicle_id || "—"}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 min-w-[140px] !capitalize">
+        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 min-w-[140px] capitalize">
           {trip.driver_name.toLowerCase()}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
           {trip.origin || "—"}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
           {trip.destination}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-          {trip.project}
+        <td className="pl-6">
+          <TooltipProvider>
+            <Tooltip delayDuration={200}>
+              <TooltipTrigger className="py-0.5 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 text-center truncate max-w-[8ch]">
+                {trip.project}
+              </TooltipTrigger>
+              <TooltipContent side="right">{trip.project}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm">
           {latestUpdate?.category ? (
@@ -124,7 +139,7 @@ export function ExpandableRow({
                         href={devices.uri_gps}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-red-600 visited:text-red-400 dark:visited:text-red-600 dark:text-red-400 underline underline-offset-2 text-sm text-center"
+                        className="text-red-600 visited:text-red-400 dark:visited:text-red-400 dark:text-red-600 underline underline-offset-2 text-sm text-center font-medium"
                       >
                         {devices.gps_provider}
                       </a>
