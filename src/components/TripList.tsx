@@ -231,7 +231,7 @@ export function TripList() {
         <StatusFilter value={statusFilter} onChange={setStatusFilter} />
       </div>
 
-      <div className="bg-white dark:bg-black rounded-lg shadow overflow-x-auto relative max-h-[calc(100vh-190px)]">
+      <div className="bg-white dark:bg-black rounded-lg shadow-sm overflow-x-auto relative max-h-[calc(100vh-190px)]">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead className="bg-gray-800">
             <tr>

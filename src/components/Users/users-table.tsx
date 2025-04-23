@@ -301,7 +301,7 @@ const UserManagement: React.FC = () => {
                           className="grid grid-cols-12 px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors duration-150"
                         >
                           <div className="col-span-5 flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-slate-700 dark:bg-slate-300 flex items-center justify-center text-white dark:text-black font-medium">
+                            <div className="shrink-0 h-10 w-10 rounded-full bg-slate-700 dark:bg-slate-300 flex items-center justify-center text-white dark:text-black font-medium">
                               {user.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="ml-4">
@@ -516,7 +516,7 @@ const UserManagement: React.FC = () => {
           {deleteConfirmUser && (
             <div className="my-2 p-4 bg-slate-50 dark:bg-slate-950 rounded-md">
               <div className="flex items-center">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 font-medium">
+                <div className="shrink-0 h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 font-medium">
                   {deleteConfirmUser.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="ml-3">

@@ -157,7 +157,7 @@ export function TripUpdatePanel({
           {Array.isArray(trip) && (
             <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-md">
               <div className="flex items-start">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <svg
                     className="h-5 w-5 text-yellow-400 dark:text-yellow-600"
                     viewBox="0 0 20 20"
@@ -216,7 +216,7 @@ export function TripUpdatePanel({
                   onChange={(e) =>
                     setCategory(e.target.value as UpdateCategory)
                   }
-                  className="w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-black"
+                  className="w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-xs focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-black"
                 >
                   {Object.entries(updateCategoryLabels).map(
                     ([value, label]) => (
@@ -236,7 +236,7 @@ export function TripUpdatePanel({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={4}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none px-3 py-2 dark:bg-black"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 shadow-xs focus:border-blue-500 focus:ring-blue-500 resize-none px-3 py-2 dark:bg-black"
                   placeholder="Describe la situación..."
                 />
               </div>
@@ -295,7 +295,7 @@ export function TripUpdatePanel({
               <button
                 type="submit"
                 disabled={isSubmitting || !notes.trim()}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white dark:text-black bg-blue-600 dark:bg-blue-400 hover:bg-blue-700 dark:hover:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-xs text-sm font-medium text-white dark:text-black bg-blue-600 dark:bg-blue-400 hover:bg-blue-700 dark:hover:bg-blue-300 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
               >
                 {isSubmitting ? "Guardando..." : "Guardar Actualización"}
               </button>

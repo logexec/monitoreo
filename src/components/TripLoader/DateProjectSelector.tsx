@@ -25,7 +25,7 @@ export function DateProjectSelector({
   };
 
   return (
-    <div className="space-y-4 bg-white p-6 rounded-lg shadow">
+    <div className="space-y-4 bg-white p-6 rounded-lg shadow-sm">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Fecha de Entrega
@@ -34,7 +34,7 @@ export function DateProjectSelector({
           type="date"
           value={date}
           onChange={(e) => onDateChange(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500"
         />
       </div>
 
@@ -46,7 +46,7 @@ export function DateProjectSelector({
           multiple
           value={selectedProjects}
           onChange={handleProjectChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500"
           size={5}
         >
           <option value="all">Todos los Proyectos</option>

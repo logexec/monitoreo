@@ -32,7 +32,7 @@ const CopyToClipboardAlert = () => {
             type="text"
             value={password}
             readOnly
-            className="bg-transparent focus:outline-none cursor-pointer text-sm text-sky-600 dark:text-sky-400 pl-4"
+            className="bg-transparent focus:outline-hidden cursor-pointer text-sm text-sky-600 dark:text-sky-400 pl-4"
           />
           <button
             onClick={copyToClipboard}

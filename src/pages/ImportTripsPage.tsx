@@ -110,7 +110,7 @@ export function ImportTripsPage() {
               <button
                 onClick={handleSearch}
                 disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
               >
                 {loading ? "Buscando..." : "Buscar Viajes"}
               </button>
@@ -119,7 +119,7 @@ export function ImportTripsPage() {
                 <button
                   onClick={handleImport}
                   disabled={importing || selectedTrips.size === 0}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400"
                 >
                   {importing
                     ? "Importando..."
@@ -131,7 +131,7 @@ export function ImportTripsPage() {
 
           <div className="lg:col-span-3">
             {loading ? (
-              <div className="flex items-center justify-center h-64 bg-white rounded-lg shadow">
+              <div className="flex items-center justify-center h-64 bg-white rounded-lg shadow-sm">
                 <p className="text-gray-500">Buscando viajes...</p>
               </div>
             ) : trips.length > 0 ? (
@@ -154,7 +154,7 @@ export function ImportTripsPage() {
                 }}
               />
             ) : (
-              <div className="flex items-center justify-center h-64 bg-white rounded-lg shadow">
+              <div className="flex items-center justify-center h-64 bg-white rounded-lg shadow-sm">
                 <p className="text-gray-500">
                   No hay viajes disponibles. Ajusta los filtros y vuelve a
                   buscar.

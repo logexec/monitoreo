@@ -59,7 +59,7 @@ export function TripUpdatesList({ updates }: TripUpdatesListProps) {
               className={`absolute left-[33px] -translate-x-1/2 w-3 h-3 rounded-full ${bg} border-2 border-white dark:border-black`}
             />
 
-            <div className="bg-white dark:bg-black rounded-lg shadow-sm border p-4 space-y-3">
+            <div className="bg-white dark:bg-black rounded-lg shadow-xs border p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Icon className={`h-5 w-5 ${text}`} />

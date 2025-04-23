@@ -1046,7 +1046,7 @@ export const AlertHistory: React.FC = () => {
                 onClick={() => handleAlertClick(alert)}
               >
                 <div className="col-span-5 flex items-center">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
+                  <div className="shrink-0 h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
                     {getAlertTypeIcon(alert.type || "")}
                   </div>
                   <div className="ml-4">
