@@ -191,7 +191,8 @@ export function TripList() {
   const uniqueProjects = [...new Set(trips.map((trip) => trip.project))].sort();
 
   return (
-    <div className="space-y-4 p-5 max-w-[1550px] mx-auto">
+    <div className="space-y-4 p-5 max-w-[1700px] mx-auto">
+      {/* <div className="space-y-4 p-5 max-w-[1700px] screen-xl:max-w-[1280px] screen-2xl:max-w-[1536px] screen-3xl:max-w-[1600px] screen-4xl:max-w-[1800px] screen-5xl:max-w-[2000px] screen-6xl:max-w-[2200px] mx-auto"> */}
       <div className="flex gap-4">
         <div className="flex-1">
           <SearchInput

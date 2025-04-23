@@ -12,6 +12,7 @@ import { RequireAuth } from "./components/RequireAuth";
 import UsersPage from "./pages/UsersPage";
 import GPSHistoryPage from "./pages/GPSHistoryPage";
 import { AuthProvider } from "./contexts/AuthContext";
+import Dashboard from "./pages/Dashboard";
 
 export function App() {
   return (
@@ -31,11 +32,13 @@ export function App() {
                   </RequireAuth>
                 }
               >
+                <Route path="/" element={<Dashboard />} index />
+                <Route path="/dashboard" element={<Dashboard />} />
                 {/* Administración */}
                 <Route path="/users" element={<UsersPage />} />
 
                 {/* Viajes */}
-                <Route index element={<TripList />} />
+                <Route path="/trips" element={<TripList />} />
                 <Route path="/new-trip" element={<AddPage />} />
                 <Route path="/upload" element={<UploadPage />} />
                 <Route path="/updates" element={<UpdatesPage />} />

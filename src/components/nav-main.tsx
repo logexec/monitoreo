@@ -27,6 +27,7 @@ export function NavMain({
     url: string;
     icon?: LucideIcon;
     isActive?: boolean;
+    hideArrow?: boolean;
     items?: {
       title: string;
       url: string;
@@ -49,7 +50,9 @@ export function NavMain({
                 <SidebarMenuButton tooltip={item.title}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                  {!item.hideArrow && (
+                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                  )}
                 </SidebarMenuButton>
               </CollapsibleTrigger>
               <CollapsibleContent>

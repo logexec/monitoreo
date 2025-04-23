@@ -1,5 +1,10 @@
 import * as React from "react";
-import { LocateFixedIcon, Shield, Truck } from "lucide-react";
+import {
+  LayoutDashboardIcon,
+  LocateFixedIcon,
+  Shield,
+  Truck,
+} from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
@@ -29,6 +34,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain
           items={[
             {
+              title: "Dashboard",
+              url: "/",
+              icon: LayoutDashboardIcon,
+              isActive: false,
+              hideArrow: true,
+            },
+            {
               title: "Administración",
               url: "#",
               icon: Shield,
@@ -41,7 +53,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               icon: Truck,
               isActive: true,
               items: [
-                { title: "Lista de viajes", url: "/" },
+                { title: "Lista de viajes", url: "/trips" },
                 // { title: "Nuevo viaje", url: "/new-trip" },
                 // { title: "Cargar viajes (Excel)", url: "/upload" },
                 { title: "Historial", url: "/updates" },
