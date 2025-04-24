@@ -1,43 +1,65 @@
-import { createContext, useContext, useState } from "react";
+// src/contexts/GlobalFilterContext.tsx
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useLocation } from "react-router";
 
-type Filters = {
+export type GlobalFilters = {
+  // Para el dashboard
   period: string;
   projects: string[];
   destinations: string[];
+  // Para TripList
+  search: string;
+  status: string;
+  project: string;
+  selectedValue: string;
 };
 
-type DashboardFilterContextType = {
-  filters: Filters;
-  setFilters: React.Dispatch<React.SetStateAction<Filters>>;
+type GlobalFilterContextType = {
+  filters: GlobalFilters;
+  setFilters: React.Dispatch<React.SetStateAction<GlobalFilters>>;
+  resetFilters: (overrides?: Partial<GlobalFilters>) => void;
 };
 
-const DashboardFilterContext = createContext<DashboardFilterContextType | null>(
-  null
-);
-
-export const useDashboardFilters = () => {
-  const context = useContext(DashboardFilterContext);
-  if (!context)
-    throw new Error(
-      "useDashboardFilters must be used within a DashboardFilterProvider"
-    );
-  return context;
+const defaultFilters: GlobalFilters = {
+  period: "last_3_months",
+  projects: [],
+  destinations: [],
+  search: "",
+  status: "all",
+  project: "all",
+  selectedValue: "on",
 };
 
-export const DashboardFilterProvider = ({
+const GlobalFilterContext = createContext<GlobalFilterContextType | null>(null);
+
+export const useGlobalFilters = () => {
+  const ctx = useContext(GlobalFilterContext);
+  if (!ctx)
+    throw new Error("useGlobalFilters must be inside GlobalFilterProvider");
+  return ctx;
+};
+
+export const GlobalFilterProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
-}: {
-  children: React.ReactNode;
 }) => {
-  const [filters, setFilters] = useState<Filters>({
-    period: "last_3_months",
-    projects: [],
-    destinations: [],
-  });
+  const location = useLocation();
+  const [filters, setFilters] = useState<GlobalFilters>(defaultFilters);
+
+  // Cada vez que cambie de ruta, resetea filtros
+  useEffect(() => {
+    // Si la navegación trae preserveFilters, no resetees
+    if (!location.state?.preserveFilters) {
+      setFilters(defaultFilters);
+    }
+  }, [location.pathname]);
+
+  const resetFilters = (overrides: Partial<GlobalFilters> = {}) => {
+    setFilters({ ...defaultFilters, ...overrides });
+  };
 
   return (
-    <DashboardFilterContext.Provider value={{ filters, setFilters }}>
+    <GlobalFilterContext.Provider value={{ filters, setFilters, resetFilters }}>
       {children}
-    </DashboardFilterContext.Provider>
+    </GlobalFilterContext.Provider>
   );
 };
