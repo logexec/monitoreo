@@ -19,7 +19,7 @@ export function Chart01() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("/api/dashboardTrips", {
+        const res = await axios.get("/dashboardTrips", {
           params: {
             period: filters.period,
             project: filters.projects,
