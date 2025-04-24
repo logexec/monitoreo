@@ -1,4 +1,4 @@
-import { useGlobalFilters } from "@/contexts/DashboardFilterContext";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { useEffect, useId, useState } from "react";
 import axios from "axios";
 import { Card, CardContent } from "./ui/card";
