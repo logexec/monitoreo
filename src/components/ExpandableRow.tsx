@@ -1,6 +1,12 @@
-import React from "react";
+import React, { useId, useRef, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronDown,
+  ChevronRight,
+  CopyIcon,
+  PhoneCallIcon,
+} from "lucide-react";
 import { Trip, TripUpdate } from "../types/database";
 import { StatusBadge } from "./StatusBadge";
 import { TripUpdatesList } from "./TripUpdatesList";
@@ -9,6 +15,12 @@ import { StatusOption } from "./StatusOption";
 import { statusLabels } from "@/constants/statusMappings";
 import { Tooltip, TooltipContent, TooltipProvider } from "./ui/tooltip";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
+import { BsWhatsapp } from "react-icons/bs";
+import { PopoverTrigger } from "@radix-ui/react-popover";
+import { Popover, PopoverContent } from "./ui/popover";
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Input } from "./ui/input";
 
 interface ExpandableRowProps {
   trip: Trip;
@@ -38,6 +50,31 @@ export function ExpandableRow({
 
   // Get the latest update
   const latestUpdate = sortedUpdates[0];
+
+  const message = `Estimado ${
+    trip.driver_name
+  }, me comunico con usted desde la plataforma de seguimiento de viajes. 
+%0ADetalles del viaje:
+%0A📦 ID: ${trip.system_trip_id}
+%0A📍 Ruta: ${trip.origin} ➡️ ${trip.destination}
+%0A📅 Fecha de entrega: ${format(parseISO(trip.delivery_date), "dd/MM/yyyy")}
+%0A🔄 Estado actual: ${statusLabels[trip.current_status]}
+%0APor favor, manténgase atento a cualquier novedad. Gracias.`;
+
+  // Codificar solo la parte del texto sin los emojis
+  const encodedMessage = encodeURIComponent(message);
+
+  const id = useId();
+  const [copied, setCopied] = useState<boolean>(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleCopy = () => {
+    if (inputRef.current) {
+      navigator.clipboard.writeText(inputRef.current.value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  };
 
   return (
     <>
@@ -93,7 +130,114 @@ export function ExpandableRow({
           {trip.vehicle_id || "—"}
         </td>
         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 min-w-[140px] capitalize">
-          {trip.driver_name.toLowerCase()}
+          <div className="flex flex-col space-y-0">
+            <span>{trip.driver_name.toLowerCase()}</span>
+            {trip.driver_document ? (
+              <small className="text-gray-400 italic dark:text-gray-600">
+                {trip.driver_document}
+              </small>
+            ) : (
+              <small className="text-gray-300 italic dark:text-gray-400 font-medium">
+                Sin documento de Identidad
+              </small>
+            )}
+            {trip.driver_phone ? (
+              <Popover>
+                <PopoverTrigger>
+                  <div className="text-sm font-medium border rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 mt-0.5 py-0.5 px-2 cursor-pointer">
+                    {trip
+                      .driver_phone!.toString()
+                      .replace(/(\d{3})(\d{3})(\d{4})/, "$1 $2 $3")}
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-[345px] p-2" side="top">
+                  <div className="flex flex-row gap-3 text-center">
+                    <div className="flex justify-start">
+                      <Link
+                        to={`https://wa.me/${trip
+                          .driver_phone!.replace(/\s+/g, "")
+                          .trim()}?text=${encodedMessage}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium flex flex-row items-center justify-start text-start space-x-1 border border-r-0 py-1 px-3 rounded-l-md hover:bg-gray-100 dark:hover:bg-slate-700"
+                      >
+                        <BsWhatsapp className="size-3" />
+                        <span>WhatsApp</span>
+                      </Link>
+                      <Link
+                        to={`tel:${trip
+                          .driver_phone!.replace(/\s+/g, "")
+                          .trim()}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium flex flex-row items-center justify-start text-start space-x-1 border py-1 px-3 hover:bg-gray-100 dark:hover:bg-slate-700"
+                      >
+                        <PhoneCallIcon className="size-3" />
+                        <span>Llamar</span>
+                      </Link>
+                      <div className="relative border border-l-0 rounded-r-md">
+                        <Input
+                          readOnly
+                          id={id}
+                          type="text"
+                          defaultValue={trip.driver_phone}
+                          aria-label="Copiar al Portapapeles"
+                          className="shadow-none border-none"
+                          ref={inputRef}
+                        />
+                        <TooltipProvider delayDuration={0}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={handleCopy}
+                                className="text-muted-foreground/80 hover:text-foreground focus-visible:border-ring focus-visible:rounded-l-none focus-visible:ring-ring/50 absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md transition-[color,box-shadow] outline-none focus:z-10 focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed"
+                                aria-label={
+                                  copied ? "Copiado" : "Copiar al portapapeles"
+                                }
+                                disabled={copied}
+                              >
+                                <div
+                                  className={cn(
+                                    "transition-all",
+                                    copied
+                                      ? "scale-100 opacity-100"
+                                      : "scale-0 opacity-0"
+                                  )}
+                                >
+                                  <CheckIcon
+                                    className="stroke-emerald-500"
+                                    size={16}
+                                    aria-hidden="true"
+                                  />
+                                </div>
+                                <div
+                                  className={cn(
+                                    "absolute transition-all",
+                                    copied
+                                      ? "scale-0 opacity-0"
+                                      : "scale-100 opacity-100"
+                                  )}
+                                >
+                                  <CopyIcon size={16} aria-hidden="true" />
+                                </div>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="px-2 py-1 text-xs">
+                              Copiar al portapapeles
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <small className="text-gray-300 italic dark:text-gray-400 font-medium">
+                Sin número de contacto
+              </small>
+            )}
+          </div>
         </td>
         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
           {trip.origin || "—"}
