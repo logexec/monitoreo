@@ -1,4 +1,4 @@
-import { useDashboardFilters } from "@/contexts/DashboardFilterContext";
+import { useGlobalFilters } from "@/contexts/DashboardFilterContext";
 import { useEffect, useId, useState } from "react";
 import axios from "axios";
 import { Card, CardContent } from "./ui/card";
@@ -13,7 +13,7 @@ type TripData = {
 
 export function Chart01() {
   const id = useId();
-  const { filters } = useDashboardFilters();
+  const { filters } = useGlobalFilters();
   const [chartData, setChartData] = useState<TripData[]>([]);
 
   useEffect(() => {
