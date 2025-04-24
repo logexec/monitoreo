@@ -187,7 +187,7 @@ export function ExpandableRow({
                           type="text"
                           defaultValue={trip.driver_phone}
                           aria-label="Copiar al Portapapeles"
-                          className="shadow-none border-none"
+                          className="shadow-none border-none focus-visible:ring-0 focus-visible:border-none text-sm font-medium text-gray-500 dark:text-gray-400 placeholder:text-gray-400 dark:placeholder:text-gray-500 w-[130px] pr-5"
                           ref={inputRef}
                         />
                         <TooltipProvider delayDuration={0}>
