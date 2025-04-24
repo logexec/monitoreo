@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Toaster as ToasterToast } from "react-hot-toast";
 import { AddPage } from "./pages/AddPage";
 import { UploadPage } from "./pages/UploadPage";
 import { TripList } from "./components/TripList";
@@ -22,7 +21,6 @@ export function App() {
         <GlobalFilterProvider>
           <Toaster position="top-center" duration={4500} richColors={true} />
           <div className="min-h-screen">
-            <ToasterToast position="top-right" />
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route element={<ProtectedRoute />}>
