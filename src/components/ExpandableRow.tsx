@@ -6,6 +6,7 @@ import {
   ChevronRight,
   CopyIcon,
   PhoneCallIcon,
+  SmartphoneIcon,
 } from "lucide-react";
 import { Trip, TripUpdate } from "../types/database";
 import { StatusBadge } from "./StatusBadge";
@@ -136,30 +137,34 @@ export function ExpandableRow({
                 {trip.driver_document}
               </small>
             ) : (
-              <small className="text-gray-300 italic dark:text-gray-400 font-medium">
+              <small className="text-gray-300 italic dark:text-gray-600 font-medium">
                 Sin documento de Identidad
               </small>
             )}
             {trip.driver_phone ? (
               <Popover>
                 <PopoverTrigger>
-                  <div className="text-sm font-medium border rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 mt-0.5 py-0.5 px-2 cursor-pointer">
-                    {trip
-                      .driver_phone!.toString()
-                      .replace(/\s+/g, "")
-                      .replace(/(\d{1})(\d{3})(\d{3})(\d{3})/, "$1 $2 $3 $4")}
+                  <div className="flex flex-row space-x-1 items-center text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-red-400 hover:text-white rounded dark:hover:bg-red-700 dark:hover:text-white mt-0.5 py-0.5 px-2 cursor-pointer w-fit">
+                    <span>
+                      <SmartphoneIcon size={16} />
+                    </span>
+                    <span>
+                      {trip.driver_phone
+                        .replace(/\s+/g, "")
+                        .replace(/(\d{1})(\d{3})(\d{3})(\d{3})/, "$1 $2 $3 $4")}
+                    </span>
                   </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-[345px] p-2" side="top">
                   <div className="flex flex-row gap-3 text-center">
                     <div className="flex justify-start">
                       <Link
-                        to={`https://wa.me/${trip
-                          .driver_phone!.replace(/\s+/g, "")
+                        to={`https://wa.me/${trip.driver_phone
+                          .replace(/\s+/g, "")
                           .trim()}?text=${encodedMessage}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm font-medium flex flex-row items-center justify-start text-start space-x-1 border border-r-0 py-1 px-3 rounded-l-md hover:bg-gray-100 dark:hover:bg-slate-700"
+                        className="text-sm font-medium flex flex-row items-center justify-start text-start space-x-1 border border-r-0 py-1 px-3 rounded-l-md hover:bg-gray-200 dark:hover:bg-slate-700"
                       >
                         <BsWhatsapp className="size-3" />
                         <span>WhatsApp</span>
@@ -170,7 +175,7 @@ export function ExpandableRow({
                           .trim()}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm font-medium flex flex-row items-center justify-start text-start space-x-1 border py-1 px-3 hover:bg-gray-100 dark:hover:bg-slate-700"
+                        className="text-sm font-medium flex flex-row items-center justify-start text-start space-x-1 border py-1 px-3 hover:bg-gray-200 dark:hover:bg-slate-700"
                       >
                         <PhoneCallIcon className="size-3" />
                         <span>Llamar</span>
@@ -222,7 +227,7 @@ export function ExpandableRow({
                                 </div>
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent className="px-2 py-1 text-xs">
+                            <TooltipContent className="px-2 py-1 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 shadow-md border">
                               Copiar al portapapeles
                             </TooltipContent>
                           </Tooltip>
