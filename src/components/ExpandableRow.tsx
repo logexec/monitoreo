@@ -155,7 +155,10 @@ export function ExpandableRow({
                     </span>
                   </div>
                 </PopoverTrigger>
-                <PopoverContent className="w-[345px] p-2" side="top">
+                <PopoverContent
+                  className="w-max h-max p-0 shadow-xs border-none"
+                  side="top"
+                >
                   <div className="flex flex-row gap-3 text-center">
                     <div className="flex justify-start">
                       <Link
