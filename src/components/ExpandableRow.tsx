@@ -53,13 +53,12 @@ export function ExpandableRow({
 
   const message = `Estimado ${
     trip.driver_name
-  }, me comunico con usted desde la plataforma de seguimiento de viajes. 
-%0ADetalles del viaje:
-%0A📦 ID: ${trip.system_trip_id}
-%0A📍 Ruta: ${trip.origin} ➡️ ${trip.destination}
-%0A📅 Fecha de entrega: ${format(parseISO(trip.delivery_date), "dd/MM/yyyy")}
-%0A🔄 Estado actual: ${statusLabels[trip.current_status]}
-%0APor favor, manténgase atento a cualquier novedad. Gracias.`;
+  }, me comunico con usted desde la torre de control sobre el siguiente viaje:
+\nID: ${trip.external_trip_id}
+\nRuta: ${trip.origin} → ${trip.destination}
+\nFecha de entrega: ${format(parseISO(trip.delivery_date), "dd/MM/yyyy")}
+\nEstado actual: ${statusLabels[trip.current_status]}.
+\n`;
 
   // Codificar solo la parte del texto sin los emojis
   const encodedMessage = encodeURIComponent(message);
@@ -147,7 +146,8 @@ export function ExpandableRow({
                   <div className="text-sm font-medium border rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 mt-0.5 py-0.5 px-2 cursor-pointer">
                     {trip
                       .driver_phone!.toString()
-                      .replace(/(\d{3})(\d{3})(\d{4})/, "$1 $2 $3")}
+                      .replace(/\s+/g, "")
+                      .replace(/(\d{1})(\d{3})(\d{3})(\d{3})/, "$1 $2 $3 $4")}
                   </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-[345px] p-2" side="top">
