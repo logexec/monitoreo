@@ -19,7 +19,7 @@ export function App() {
     <Router>
       <AuthProvider>
         <Toaster position="top-center" duration={4500} richColors={true} />
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen">
           <ToasterToast position="top-right" />
           <Routes>
             <Route path="/login" element={<LoginPage />} />

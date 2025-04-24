@@ -1,10 +1,5 @@
 import * as React from "react";
-import {
-  LayoutDashboardIcon,
-  LocateFixedIcon,
-  Shield,
-  Truck,
-} from "lucide-react";
+import { LocateFixedIcon, Shield, Truck } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
@@ -17,6 +12,7 @@ import {
 import logo from "@/assets/logex_logo.png";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { NavDashboard } from "./nav-dashboard";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, isLoading } = useAuth();
@@ -24,22 +20,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   if (isLoading || !user) return null; // No renderiza nada hasta obtener los datos
 
   return (
-    <Sidebar collapsible="icon" {...props} className="z-40">
+    <Sidebar collapsible="icon" {...props} className="z-40 dark:bg-black">
       <SidebarHeader className="p-5">
         <Link to={"/"} className="block">
           <img src={logo} alt="Logex Logo" />
         </Link>
       </SidebarHeader>
       <SidebarContent>
+        <NavDashboard />
         <NavMain
           items={[
-            {
-              title: "Dashboard",
-              url: "/",
-              icon: LayoutDashboardIcon,
-              isActive: false,
-              hideArrow: true,
-            },
             {
               title: "Administración",
               url: "#",
