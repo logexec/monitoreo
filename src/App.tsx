@@ -12,7 +12,7 @@ import UsersPage from "./pages/UsersPage";
 import GPSHistoryPage from "./pages/GPSHistoryPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import Dashboard from "./pages/Dashboard";
-import { GlobalFilterProvider } from "./contexts/DashboardFilterContext";
+import { GlobalFilterProvider } from "./contexts/GlobalFilterContext";
 
 export function App() {
   return (

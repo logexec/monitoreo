@@ -1,51 +1,61 @@
-import { createContext, useContext, useEffect, useState } from "react";
+// src/contexts/GlobalFilterContext.tsx
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
 
-type Filters = {
+export type GlobalFilters = {
+  // Para el dashboard
   period: string;
   projects: string[];
   destinations: string[];
+  // Para TripList
+  search: string;
+  status: string;
+  project: string;
+  selectedValue: string;
 };
 
 type GlobalFilterContextType = {
-  filters: Filters;
-  setFilters: React.Dispatch<React.SetStateAction<Filters>>;
-  resetFilters: () => void;
+  filters: GlobalFilters;
+  setFilters: React.Dispatch<React.SetStateAction<GlobalFilters>>;
+  resetFilters: (overrides?: Partial<GlobalFilters>) => void;
 };
 
-const defaultFilters: Filters = {
+const defaultFilters: GlobalFilters = {
   period: "last_3_months",
   projects: [],
   destinations: [],
+  search: "",
+  status: "all",
+  project: "all",
+  selectedValue: "on",
 };
 
 const GlobalFilterContext = createContext<GlobalFilterContextType | null>(null);
 
 export const useGlobalFilters = () => {
-  const context = useContext(GlobalFilterContext);
-  if (!context)
-    throw new Error(
-      "useGlobalFilters must be used within a GlobalFilterProvider"
-    );
-  return context;
+  const ctx = useContext(GlobalFilterContext);
+  if (!ctx)
+    throw new Error("useGlobalFilters must be inside GlobalFilterProvider");
+  return ctx;
 };
 
-export const GlobalFilterProvider = ({
+export const GlobalFilterProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
-}: {
-  children: React.ReactNode;
 }) => {
-  const [filters, setFilters] = useState<Filters>(defaultFilters);
   const location = useLocation();
+  const [filters, setFilters] = useState<GlobalFilters>(defaultFilters);
 
-  // Resetea los filtros al cambiar de ruta si no hay filtros explícitos
+  // Cada vez que cambie de ruta, resetea filtros
   useEffect(() => {
-    if (location.state?.preserveFilters !== true) {
+    // Si la navegación trae preserveFilters, no resetees
+    if (!location.state?.preserveFilters) {
       setFilters(defaultFilters);
     }
   }, [location.pathname]);
 
-  const resetFilters = () => setFilters(defaultFilters);
+  const resetFilters = (overrides: Partial<GlobalFilters> = {}) => {
+    setFilters({ ...defaultFilters, ...overrides });
+  };
 
   return (
     <GlobalFilterContext.Provider value={{ filters, setFilters, resetFilters }}>

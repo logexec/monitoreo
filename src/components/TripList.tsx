@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Filter, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Trip, TripUpdate } from "../types/database";
 import { TripUpdatePanel } from "./TripUpdatePanel";
@@ -13,13 +13,13 @@ import { sortTrips } from "../utils/sorting";
 import { getTrips } from "@/lib/axios";
 import Loading from "./Loading";
 import CustomSwitch from "./ui/CustomSwitch";
+import { useLocation } from "react-router-dom";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { ProjectMultiSelect } from "./ProjectMultiSelect";
 
 export function TripList() {
   const [isLoading, setIsLoading] = useState(true);
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [projectFilter, setProjectFilter] = useState<string>("all");
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [expandedTrips, setExpandedTrips] = useState<Set<string>>(new Set());
   const [selectedTrips, setSelectedTrips] = useState<Set<string>>(new Set());
@@ -31,18 +31,32 @@ export function TripList() {
     field: null,
     direction: "asc",
   });
-  const [selectedValue, setSelectedValue] = useState("on");
+
+  const { filters, setFilters } = useGlobalFilters();
+  const { projects, search, status, selectedValue } = filters;
+  const location = useLocation();
+
+  const uniqueProjects = [...new Set(trips.map((t) => t.project))].sort();
+  const projectOptions = uniqueProjects.map((p) => ({ value: p, label: p }));
+
+  useEffect(() => {
+    if (location.state?.filtersOverride) {
+      setFilters((prev) => ({
+        ...prev,
+        ...location.state.filtersOverride,
+      }));
+    }
+  }, [location.state, setFilters]);
 
   useEffect(() => {
     const fetchTrips = async () => {
       setIsLoading(true);
       try {
-        const currentDate =
+        const dateParam =
           selectedValue === "on"
             ? new Date().toISOString().slice(0, 10)
             : undefined;
-        const response = await getTrips(currentDate);
-
+        const response = await getTrips(dateParam);
         setTrips(
           response.map((trip: Trip) => ({
             ...trip,
@@ -177,9 +191,13 @@ export function TripList() {
       trip.project.toLowerCase().includes(normalizedSearch);
 
     const matchesStatus =
-      statusFilter === "all" || trip.updates?.[0]?.category === statusFilter;
+      filters.status === "all" ||
+      trip.updates?.[0]?.category === filters.status;
 
-    return matchesSearch && matchesStatus;
+    const matchesProject =
+      projects.length === 0 || projects.includes(trip.project);
+
+    return matchesSearch && matchesStatus && matchesProject;
   });
 
   const sortedTrips = sortTrips(filteredTrips, sortConfig) || [];
@@ -188,21 +206,26 @@ export function TripList() {
     return <Loading text="Cargando viajes..." fullScreen />;
   }
 
-  const uniqueProjects = [...new Set(trips.map((trip) => trip.project))].sort();
+  // const uniqueProjects = [...new Set(trips.map((trip) => trip.project))].sort();
 
   return (
-    <div className="space-y-4 p-5 max-w-[1700px] mx-auto">
+    <div className="space-y-4 p-5 lg:max-w-[1024px] xl:max-w-[1280px] 2xl:max-w-[1536px] mx-auto">
       {/* <div className="space-y-4 p-5 max-w-[1700px] screen-xl:max-w-[1280px] screen-2xl:max-w-[1536px] screen-3xl:max-w-[1600px] screen-4xl:max-w-[1800px] screen-5xl:max-w-[2000px] screen-6xl:max-w-[2200px] mx-auto"> */}
       <div className="flex gap-4">
         <div className="flex-1">
           <SearchInput
             value={search}
-            onChange={setSearch}
+            onChange={(v) =>
+              setFilters((f) => ({
+                ...f,
+                search: v,
+              }))
+            }
             placeholder={`Buscar viajes... (${trips.length})`}
           />
         </div>
         <div className="flex items-center gap-2">
-          <CustomSwitch value={selectedValue} onChange={setSelectedValue} />
+          <CustomSwitch />
         </div>
         {selectedTrips.size > 0 && (
           <button
@@ -214,21 +237,16 @@ export function TripList() {
           </button>
         )}
         <div className="relative">
-          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 h-4 w-4" />
-          <select
-            className="pl-10 pr-4 py-2 border rounded-lg appearance-none bg-white dark:bg-black min-w-[200px]"
-            value={projectFilter}
-            onChange={(e) => setProjectFilter(e.target.value)}
-          >
-            <option value="all">Todos los Proyectos</option>
-            {uniqueProjects.map((project) => (
-              <option key={project} value={project}>
-                {project}
-              </option>
-            ))}
-          </select>
+          <ProjectMultiSelect
+            options={projectOptions}
+            selected={filters.projects}
+            onChange={(arr) => setFilters((f) => ({ ...f, projects: arr }))}
+          />
         </div>
-        <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+        <StatusFilter
+          value={status}
+          onChange={(v) => setFilters((f) => ({ ...f, status: v }))}
+        />
       </div>
 
       <div className="bg-white dark:bg-black rounded-lg shadow-sm overflow-x-auto relative max-h-[calc(100vh-190px)]">
