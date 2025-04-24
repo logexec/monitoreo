@@ -20,7 +20,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   if (isLoading || !user) return null; // No renderiza nada hasta obtener los datos
 
   return (
-    <Sidebar collapsible="icon" {...props} className="z-40 dark:bg-black">
+    <Sidebar collapsible="icon" {...props} className="z-50">
       <SidebarHeader className="p-5">
         <Link to={"/"} className="block">
           <img src={logo} alt="Logex Logo" />
