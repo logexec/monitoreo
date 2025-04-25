@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { ChartContainer, ChartTooltip } from "./ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
