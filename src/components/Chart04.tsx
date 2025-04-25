@@ -13,8 +13,8 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 const chartData = [
-  { name: "Propios", cantidad: 1000 },
-  { name: "Alquilados", cantidad: 3500 },
+  { name: "Propios", cantidad: 1775 },
+  { name: "Alquilados", cantidad: 3759 },
 ];
 
 export function Chart04() {
