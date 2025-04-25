@@ -16,7 +16,7 @@ export function CustomTooltipContent({
   colorMap = {},
   labelMap = {},
   dataKeys, // If provided, will be used to order the items
-  valueFormatter = (value) => `$${value.toLocaleString()}`,
+  valueFormatter = (value) => `${value.toLocaleString()}`,
 }: CustomTooltipContentProps) {
   if (!active || !payload || !payload.length) {
     return null;

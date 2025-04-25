@@ -32,21 +32,9 @@ export function SectionCards() {
         <Chart04 />
       </Card>
       <Card className="@container/card">
-        <CardHeader className="relative">
-          <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold">
-            Viajes por Proyecto
-          </CardTitle>
-        </CardHeader>
         <Chart02 />
       </Card>
-      <Card className="@container/card">
-        <CardHeader className="relative">
-          <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold">
-            Viajes por Destino
-          </CardTitle>
-        </CardHeader>
-        <Chart01 />
-      </Card>
+      <Chart01 />
     </div>
   );
 }

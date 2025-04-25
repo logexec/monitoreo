@@ -1,7 +1,7 @@
-"use client";
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import axios from "axios";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -11,12 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import {
   Select,
   SelectContent,
@@ -25,167 +20,433 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-const chartData = [
-  { date: "2025-01-01", desktop: 222, mobile: 150 },
-  { date: "2025-01-02", desktop: 97, mobile: 180 },
-  { date: "2025-01-03", desktop: 167, mobile: 120 },
-  { date: "2025-01-04", desktop: 242, mobile: 260 },
-  { date: "2025-01-05", desktop: 373, mobile: 290 },
-  { date: "2025-01-06", desktop: 301, mobile: 340 },
-  { date: "2025-01-07", desktop: 245, mobile: 180 },
-  { date: "2025-01-08", desktop: 409, mobile: 320 },
-  { date: "2025-01-09", desktop: 59, mobile: 110 },
-  { date: "2025-01-10", desktop: 261, mobile: 190 },
-  { date: "2025-01-11", desktop: 327, mobile: 350 },
-  { date: "2025-01-12", desktop: 292, mobile: 210 },
-  { date: "2025-01-13", desktop: 342, mobile: 380 },
-  { date: "2025-01-14", desktop: 137, mobile: 220 },
-  { date: "2025-01-15", desktop: 120, mobile: 170 },
-  { date: "2025-01-16", desktop: 138, mobile: 190 },
-  { date: "2025-01-17", desktop: 446, mobile: 360 },
-  { date: "2025-01-18", desktop: 364, mobile: 410 },
-  { date: "2025-01-19", desktop: 243, mobile: 180 },
-  { date: "2025-01-20", desktop: 89, mobile: 150 },
-  { date: "2025-01-21", desktop: 137, mobile: 200 },
-  { date: "2025-01-22", desktop: 224, mobile: 170 },
-  { date: "2025-01-23", desktop: 138, mobile: 230 },
-  { date: "2025-01-24", desktop: 387, mobile: 290 },
-  { date: "2025-01-25", desktop: 215, mobile: 250 },
-  { date: "2025-01-26", desktop: 75, mobile: 130 },
-  { date: "2025-01-27", desktop: 383, mobile: 420 },
-  { date: "2025-01-28", desktop: 122, mobile: 180 },
-  { date: "2025-01-29", desktop: 315, mobile: 240 },
-  { date: "2025-01-30", desktop: 454, mobile: 380 },
-  { date: "2025-02-01", desktop: 165, mobile: 220 },
-  { date: "2025-02-02", desktop: 293, mobile: 310 },
-  { date: "2025-02-03", desktop: 247, mobile: 190 },
-  { date: "2025-02-04", desktop: 385, mobile: 420 },
-  { date: "2025-02-05", desktop: 481, mobile: 390 },
-  { date: "2025-02-06", desktop: 498, mobile: 520 },
-  { date: "2025-02-07", desktop: 388, mobile: 300 },
-  { date: "2025-02-08", desktop: 149, mobile: 210 },
-  { date: "2025-02-09", desktop: 227, mobile: 180 },
-  { date: "2025-02-10", desktop: 293, mobile: 330 },
-  { date: "2025-02-11", desktop: 335, mobile: 270 },
-  { date: "2025-02-12", desktop: 197, mobile: 240 },
-  { date: "2025-02-13", desktop: 197, mobile: 160 },
-  { date: "2025-02-14", desktop: 448, mobile: 490 },
-  { date: "2025-02-15", desktop: 473, mobile: 380 },
-  { date: "2025-02-16", desktop: 338, mobile: 400 },
-  { date: "2025-02-17", desktop: 499, mobile: 420 },
-  { date: "2025-02-18", desktop: 315, mobile: 350 },
-  { date: "2025-02-19", desktop: 235, mobile: 180 },
-  { date: "2025-02-20", desktop: 177, mobile: 230 },
-  { date: "2025-02-21", desktop: 82, mobile: 140 },
-  { date: "2025-02-22", desktop: 81, mobile: 120 },
-  { date: "2025-02-23", desktop: 252, mobile: 290 },
-  { date: "2025-02-24", desktop: 294, mobile: 220 },
-  { date: "2025-02-25", desktop: 201, mobile: 250 },
-  { date: "2025-02-26", desktop: 213, mobile: 170 },
-  { date: "2025-02-27", desktop: 420, mobile: 460 },
-  { date: "2025-02-28", desktop: 233, mobile: 190 },
-  { date: "2025-02-29", desktop: 78, mobile: 130 },
-  { date: "2025-02-30", desktop: 340, mobile: 280 },
-  { date: "2025-02-31", desktop: 178, mobile: 230 },
-  { date: "2025-04-01", desktop: 178, mobile: 200 },
-  { date: "2025-04-02", desktop: 470, mobile: 410 },
-  { date: "2025-04-03", desktop: 103, mobile: 160 },
-  { date: "2025-04-04", desktop: 439, mobile: 380 },
-  { date: "2025-04-05", desktop: 88, mobile: 140 },
-  { date: "2025-04-06", desktop: 294, mobile: 250 },
-  { date: "2025-04-07", desktop: 323, mobile: 370 },
-  { date: "2025-04-08", desktop: 385, mobile: 320 },
-  { date: "2025-04-09", desktop: 438, mobile: 480 },
-  { date: "2025-04-10", desktop: 155, mobile: 200 },
-  { date: "2025-04-11", desktop: 92, mobile: 150 },
-  { date: "2025-04-12", desktop: 492, mobile: 420 },
-  { date: "2025-04-13", desktop: 81, mobile: 130 },
-  { date: "2025-04-14", desktop: 426, mobile: 380 },
-  { date: "2025-04-15", desktop: 307, mobile: 350 },
-  { date: "2025-04-16", desktop: 371, mobile: 310 },
-  { date: "2025-04-17", desktop: 475, mobile: 520 },
-  { date: "2025-04-18", desktop: 107, mobile: 170 },
-  { date: "2025-04-19", desktop: 341, mobile: 290 },
-  { date: "2025-04-20", desktop: 408, mobile: 450 },
-  { date: "2025-04-21", desktop: 169, mobile: 210 },
-  { date: "2025-04-22", desktop: 317, mobile: 270 },
-  { date: "2025-04-23", desktop: 480, mobile: 530 },
-  { date: "2025-04-24", desktop: 132, mobile: 180 },
-  { date: "2025-04-25", desktop: 141, mobile: 190 },
-  { date: "2025-04-26", desktop: 434, mobile: 380 },
-  { date: "2025-04-27", desktop: 448, mobile: 490 },
-  { date: "2025-04-28", desktop: 149, mobile: 200 },
-  { date: "2025-04-29", desktop: 103, mobile: 160 },
-  { date: "2025-04-30", desktop: 446, mobile: 400 },
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { ProjectMultiSelect } from "./ProjectMultiSelect";
+
+// Color palette for project lines
+const COLOR_PALETTE = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(120, 60%, 50%)",
+  "hsl(240, 60%, 50%)",
+  "hsl(0, 60%, 50%)",
+  "hsl(180, 60%, 50%)",
+  "hsl(300, 60%, 50%)",
 ];
 
-const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  desktop: {
-    label: "Desktop",
-    color: "hsl(var(--chart-1))",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "hsl(var(--chart-2))",
-  },
-} satisfies ChartConfig;
+// Type for destination data
+type DestinationTripData = {
+  destination: string;
+  trips: number;
+  [key: string]:
+    | number
+    | string
+    | Array<{ delivery_date: string; count: number }>
+    | Array<{ name: string; trips: number }>
+    | undefined;
+  details?: Array<{ delivery_date: string; count: number }>;
+  projects?: Array<{ name: string; trips: number }>;
+};
+
+// Type for project data (when filtering by destination)
+type ProjectTripData = {
+  project: string;
+  trips: number;
+  details?: Array<{ delivery_date: string; count: number }>;
+  isProjectMode: boolean;
+};
+
+const CustomDestinationTooltip = ({ active, payload, label, filters }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const isProjectMode = data.isProjectMode;
+    const noFilters =
+      filters.projects.length === 0 && filters.destinations.length === 0;
+
+    return (
+      <div className="grid min-w-[8rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+        <div className="font-medium">
+          {isProjectMode ? "Proyecto" : "Destino"}: {label}
+        </div>
+        <div className="grid gap-1.5">
+          {isProjectMode ? (
+            <div className="flex w-full flex-wrap gap-2 items-center">
+              <div className="shrink-0 rounded-[2px] h-2.5 w-2.5 bg-primary"></div>
+              <div className="flex flex-1 justify-between leading-none items-center">
+                <span>Total Viajes</span>
+                <span className="font-mono font-medium tabular-nums text-foreground">
+                  {data.trips}
+                </span>
+              </div>
+            </div>
+          ) : noFilters && data.projects && data.projects.length > 0 ? (
+            data.projects.map((project: { name: string; trips: number }) => (
+              <div
+                key={project.name}
+                className="flex w-full flex-wrap gap-2 items-center"
+              >
+                <div className="shrink-0 rounded-[2px] h-2.5 w-2.5 bg-primary"></div>
+                <div className="flex flex-1 justify-between leading-none items-center">
+                  <span>{project.name}</span>
+                  <span className="font-mono font-medium tabular-nums text-foreground">
+                    {project.trips}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex w-full flex-wrap gap-2 items-center">
+              <div className="shrink-0 rounded-[2px] h-2.5 w-2.5 bg-primary"></div>
+              <div className="flex flex-1 justify-between leading-none items-center">
+                <span>Total Viajes</span>
+                <span className="font-mono font-medium tabular-nums text-foreground">
+                  {Object.entries(data)
+                    .filter(
+                      ([key, value]) =>
+                        typeof value === "number" && key !== "trips"
+                    )
+                    .reduce((sum, [, value]) => sum + (value as number), 0)}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile();
-  const [timeRange, setTimeRange] = React.useState("30d");
+  const { filters, setFilters, filterOptions } = useGlobalFilters();
+  const [chartData, setChartData] = React.useState<
+    (DestinationTripData | ProjectTripData)[]
+  >([]);
+  const [rawData, setRawData] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
+  // Set default period for mobile
   React.useEffect(() => {
-    if (isMobile) {
-      setTimeRange("7d");
+    if (isMobile && filters.period !== "last_7_days") {
+      setFilters((prev) => ({ ...prev, period: "last_7_days" }));
     }
-  }, [isMobile]);
+  }, [isMobile, setFilters]);
 
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date);
-    const referenceDate = new Date("2025-04-30");
-    let daysToSubtract = 90;
-    if (timeRange === "30d") {
-      daysToSubtract = 30;
-    } else if (timeRange === "7d") {
-      daysToSubtract = 7;
-    }
-    const startDate = new Date(referenceDate);
-    startDate.setDate(startDate.getDate() - daysToSubtract);
-    return date >= startDate;
+  const [chartConfig, setChartConfig] = React.useState<{
+    [key: string]: { label: string; color: string };
+  }>({
+    visitors: { label: "Viajes", color: "" },
   });
+
+  // Filter data by time range
+  const filterDataByTimeRange = (data: any[], range: string) => {
+    console.log("Filtering data for period:", range, "Raw data:", data);
+
+    const now = new Date();
+    let startDate: Date;
+
+    switch (range) {
+      case "last_30_days":
+        startDate = new Date(now.setDate(now.getDate() - 30));
+        break;
+      case "last_7_days":
+        startDate = new Date(now.setDate(now.getDate() - 7));
+        break;
+      case "today":
+        startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case "last_3_months":
+      default:
+        console.log("Returning unfiltered data for last_3_months");
+        return data;
+    }
+
+    const filteredData = data
+      .map((item) => {
+        const isProjectMode = item.isProjectMode;
+        if (!item.details) {
+          console.log("No details for item:", item);
+          return { ...item, trips: 0 };
+        }
+
+        const filteredDetails = item.details.filter(
+          (detail: { delivery_date: string; count: number }) => {
+            const detailDate = new Date(detail.delivery_date);
+            if (range === "today") {
+              return (
+                detailDate.getFullYear() === startDate.getFullYear() &&
+                detailDate.getMonth() === startDate.getMonth() &&
+                detailDate.getDate() === startDate.getDate()
+              );
+            }
+            return detailDate >= startDate;
+          }
+        );
+
+        const filteredTrips = filteredDetails.reduce(
+          (sum: number, detail: { count: number }) => sum + detail.count,
+          0
+        );
+
+        const result: any = {
+          ...item,
+          details: filteredDetails,
+          trips: filteredTrips,
+        };
+
+        if (!isProjectMode) {
+          // Update project-specific counts for destination mode
+          if (item.projects) {
+            result.projects = item.projects
+              .map((proj: { name: string; trips: number }) => ({
+                ...proj,
+                trips: filteredTrips, // Update based on filtered details
+              }))
+              .filter((proj: { trips: number }) => proj.trips > 0);
+          }
+          // Update dynamic project fields
+          Object.keys(item).forEach((key) => {
+            if (typeof item[key] === "number" && key !== "trips") {
+              result[key] = filteredTrips;
+            }
+          });
+        }
+
+        console.log("Filtered item:", result);
+        return result;
+      })
+      .filter(
+        (item) =>
+          item.trips > 0 ||
+          Object.values(item).some((val) => typeof val === "number" && val > 0)
+      );
+
+    console.log("Filtered data:", filteredData);
+    return filteredData;
+  };
+
+  // Fetch data only when projects or destinations change
+  React.useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const isProjectMode = filters.destinations.length > 0;
+
+        if (isProjectMode) {
+          const res = await axios.get("/dashboardTrips", {
+            params: {
+              period: "last_3_months",
+              destination: filters.destinations,
+              groupBy: "project",
+            },
+          });
+
+          if (Array.isArray(res.data)) {
+            const processedData = res.data
+              .map(
+                (item: {
+                  project: string;
+                  trips: number;
+                  details?: any[];
+                }) => ({
+                  project: item.project,
+                  trips: item.trips,
+                  details: item.details,
+                  isProjectMode: true,
+                })
+              )
+              .sort((a, b) => b.trips - a.trips)
+              .filter((item) => item.trips > 0);
+
+            console.log("Fetched project mode data:", processedData);
+            setRawData(processedData);
+            setChartData(filterDataByTimeRange(processedData, filters.period));
+            setChartConfig({
+              visitors: { label: "Viajes por Proyecto", color: "" },
+              trips: { label: "Total Viajes", color: COLOR_PALETTE[0] },
+            });
+          } else {
+            setError("Formato de datos inesperado");
+          }
+        } else {
+          const res = await axios.get("/dashboardTrips", {
+            params: {
+              period: "last_3_months",
+              project: filters.projects.length ? filters.projects : undefined,
+              groupBy: "destination",
+            },
+          });
+
+          if (Array.isArray(res.data)) {
+            const projectRes = await axios.get("/dashboardTrips", {
+              params: {
+                period: "last_3_months",
+                destination: filters.destinations.length
+                  ? filters.destinations
+                  : undefined,
+                groupBy: "project",
+              },
+            });
+
+            const projectsWithTrips: string[] = projectRes.data
+              .filter((p: { project: string; trips: number }) => p.trips > 0)
+              .map((p: { project: string }) => p.project);
+
+            const newChartConfig: {
+              [key: string]: { label: string; color: string };
+            } = {
+              visitors: { label: "Viajes por Destino", color: "" },
+            };
+            projectsWithTrips.forEach((proj, index) => {
+              newChartConfig[proj] = {
+                label: proj,
+                color: COLOR_PALETTE[index % COLOR_PALETTE.length],
+              };
+            });
+            setChartConfig(newChartConfig);
+
+            const processedData = await Promise.all(
+              res.data.map(
+                async (item: {
+                  destination: string;
+                  trips: number;
+                  details?: any[];
+                }) => {
+                  const dataPoint: DestinationTripData = {
+                    destination: item.destination,
+                    trips: item.trips,
+                    details: item.details,
+                  };
+
+                  const projectBreakdown = await axios.get("/dashboardTrips", {
+                    params: {
+                      period: "last_3_months",
+                      destination: [item.destination],
+                      groupBy: "project",
+                    },
+                  });
+
+                  projectsWithTrips.forEach((proj) => {
+                    dataPoint[proj] = 0;
+                  });
+
+                  if (Array.isArray(projectBreakdown.data)) {
+                    projectBreakdown.data.forEach(
+                      (p: { project: string; trips: number }) => {
+                        if (projectsWithTrips.includes(p.project)) {
+                          dataPoint[p.project] = p.trips;
+                        }
+                      }
+                    );
+
+                    if (filters.projects.length === 0) {
+                      dataPoint.projects = projectBreakdown.data
+                        .filter((p: { trips: number }) => p.trips > 0)
+                        .map((p: { project: string; trips: number }) => ({
+                          name: p.project,
+                          trips: p.trips,
+                        }))
+                        .sort((a, b) => b.trips - a.trips);
+                    }
+                  }
+
+                  return dataPoint;
+                }
+              )
+            );
+
+            console.log("Fetched destination mode data:", processedData);
+            setRawData(processedData);
+            setChartData(filterDataByTimeRange(processedData, filters.period));
+          } else {
+            setError("Formato de datos inesperado");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching chart data", error);
+        setError("No se pudieron cargar los datos del gráfico.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [filters.projects, filters.destinations]);
+
+  // Update chartData when period changes (no fetch)
+  React.useEffect(() => {
+    console.log("Period changed:", filters.period);
+    const filteredData = filterDataByTimeRange(rawData, filters.period);
+    setChartData(filteredData);
+  }, [filters.period, rawData]);
 
   return (
     <Card className="@container/card">
       <CardHeader className="relative">
-        <CardTitle>Viajes Por fecha de entrega</CardTitle>
+        <CardTitle>
+          {filters.destinations.length > 0
+            ? "Viajes por Proyecto"
+            : "Viajes por Destino"}
+        </CardTitle>
         <CardDescription>
           <span className="@[540px]/card:block hidden">
             Total por los últimos 3 meses
           </span>
-          <span className="@[540px]/card:hidden">Últimos 3 meses </span>
+          <span className="@[540px]/card:hidden">Últimos 3 meses</span>
         </CardDescription>
         <div className="absolute right-4 top-4">
+          <div className="flex gap-2 mb-2">
+            <ProjectMultiSelect
+              placeholder="Filtrar proyectos"
+              options={filterOptions.projectOptions}
+              selected={filters.projects}
+              onChange={(selected) =>
+                setFilters((prev) => ({ ...prev, projects: selected }))
+              }
+            />
+            <ProjectMultiSelect
+              placeholder="Filtrar destinos"
+              options={filterOptions.destinationOptions}
+              selected={filters.destinations}
+              onChange={(selected) =>
+                setFilters((prev) => ({ ...prev, destinations: selected }))
+              }
+            />
+          </div>
           <ToggleGroup
             type="single"
-            value={timeRange}
-            onValueChange={setTimeRange}
+            value={filters.period}
+            onValueChange={(value) =>
+              value && setFilters((prev) => ({ ...prev, period: value }))
+            }
             variant="outline"
             className="@[767px]/card:flex hidden"
           >
-            <ToggleGroupItem value="90d" className="h-8 px-2.5">
+            <ToggleGroupItem value="last_3_months" className="h-8 px-2.5">
               Últimos 3 meses
             </ToggleGroupItem>
-            <ToggleGroupItem value="30d" className="h-8 px-2.5">
+            <ToggleGroupItem value="last_30_days" className="h-8 px-2.5">
               Últimos 30 días
             </ToggleGroupItem>
-            <ToggleGroupItem value="7d" className="h-8 px-2.5">
+            <ToggleGroupItem value="last_7_days" className="h-8 px-2.5">
               Últimos 7 días
             </ToggleGroupItem>
+            <ToggleGroupItem value="today" className="h-8 px-2.5">
+              Hoy
+            </ToggleGroupItem>
           </ToggleGroup>
-          <Select value={timeRange} onValueChange={setTimeRange}>
+          <Select
+            value={filters.period}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, period: value }))
+            }
+          >
             <SelectTrigger
               className="@[767px]/card:hidden flex w-40"
               aria-label="Select a value"
@@ -193,96 +454,101 @@ export function ChartAreaInteractive() {
               <SelectValue placeholder="Last 3 months" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
-              <SelectItem value="90d" className="rounded-lg">
+              <SelectItem value="last_3_months" className="rounded-lg">
                 Last 3 months
               </SelectItem>
-              <SelectItem value="30d" className="rounded-lg">
+              <SelectItem value="last_30_days" className="rounded-lg">
                 Last 30 days
               </SelectItem>
-              <SelectItem value="7d" className="rounded-lg">
+              <SelectItem value="last_7_days" className="rounded-lg">
                 Last 7 days
+              </SelectItem>
+              <SelectItem value="today" className="rounded-lg">
+                Today
               </SelectItem>
             </SelectContent>
           </Select>
         </div>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
-        >
-          <AreaChart data={filteredData}>
-            <defs>
-              <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-desktop)"
-                  stopOpacity={1.0}
+        {isLoading && <p className="text-center py-4">Cargando datos...</p>}
+        {error && <p className="text-red-500 text-center py-4">{error}</p>}
+        {!isLoading && !error && chartData.length === 0 && (
+          <p className="text-center py-4">
+            No hay datos disponibles para los filtros seleccionados.
+          </p>
+        )}
+        {!isLoading && chartData.length > 0 && (
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[250px] w-full"
+          >
+            <AreaChart data={chartData}>
+              <defs>
+                {Object.keys(chartConfig)
+                  .filter((key) => key !== "visitors")
+                  .map((key) => (
+                    <linearGradient
+                      key={key}
+                      id={`fill${key}`}
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor={chartConfig[key].color}
+                        stopOpacity={1.0}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor={chartConfig[key].color}
+                        stopOpacity={0.1}
+                      />
+                    </linearGradient>
+                  ))}
+              </defs>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey={
+                  filters.destinations.length > 0 ? "project" : "destination"
+                }
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                interval={0}
+                tick={{ fontSize: 11 }}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={<CustomDestinationTooltip filters={filters} />}
+              />
+              {filters.destinations.length > 0 ? (
+                <Area
+                  dataKey="trips"
+                  type="natural"
+                  fill="url(#filltrips)"
+                  stroke={chartConfig.trips?.color || COLOR_PALETTE[0]}
+                  stackId="a"
                 />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-desktop)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value);
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                });
-              }}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    });
-                  }}
-                  indicator="dot"
-                />
-              }
-            />
-            <Area
-              dataKey="mobile"
-              type="natural"
-              fill="url(#fillMobile)"
-              stroke="var(--color-mobile)"
-              stackId="a"
-            />
-            <Area
-              dataKey="desktop"
-              type="natural"
-              fill="url(#fillDesktop)"
-              stroke="var(--color-desktop)"
-              stackId="a"
-            />
-          </AreaChart>
-        </ChartContainer>
+              ) : (
+                Object.keys(chartConfig)
+                  .filter((key) => key !== "visitors")
+                  .map((key) => (
+                    <Area
+                      key={key}
+                      dataKey={key}
+                      type="natural"
+                      fill={`url(#fill${key})`}
+                      stroke={chartConfig[key].color}
+                      stackId="a"
+                    />
+                  ))
+              )}
+            </AreaChart>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   );
