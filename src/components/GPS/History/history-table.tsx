@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, JSX } from "react";
 import {
   Search,
   Filter,
@@ -337,6 +337,22 @@ export const AlertHistory: React.FC = () => {
       AccelerationX: "Aceleración (X)",
       AccelerationY: "Aceleración (Y)",
       AccelerationZ: "Aceleración (Z)",
+      aMyIxtPqLjUuh8aqh4LyEHA: "Advertencia de salida de carril",
+      aeqiSjUvA006rlfwMwb5TwQ: "AUX 1 Botón de Pánico",
+      "aXa_QuIoye0i-QckxJqwBnw": "AUX 2 Puerta Derecha",
+      aOLKfgbVBt0qNOeEmDCCPzA: "AUX 3 Puerta Posterior",
+      "aWSPWzk-NJEiYTQ2YXHkY-w": "La cámara se ha sacudido",
+      ahsHUgFf14kC9buW_2uD_7g: "Cinturón de seguridad desabrochado",
+      aDnWjo1PzZkuhmBPAW90sUQ: "Comidas y bebidas",
+      a8KOF9bbgp0CvfxAbTyhRjA:
+        "Conducción demasiado cercana al vehículo en frente",
+      aDFSCkEv9CkCoy0IMisNcnw: "Conducción distraída",
+      aU0wQnNo7nkqBrF5Y1Ktxbg: "Detención no autorizada",
+      "auW-hSEbNB0ujUxn0IV0iGA": "Dispositivo desenchufado",
+      "aomKC9i_VJk-lSfEKkA0VbA": "Fumando",
+      akAgqU0UiB0yk2KkDPdvZxA: "Obstrucción del lente",
+      a7lMir8IwYEG0ZPQOqoOLEQ:
+        "Cinturón de seguridad desabrochado (acompañante)",
     };
 
     return id ? map[id] || `Diagnóstico desconocido (${id})` : "No disponible";
