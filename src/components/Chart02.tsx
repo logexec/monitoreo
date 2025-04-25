@@ -82,8 +82,6 @@ export function Chart02() {
 
   // Filter data by time range
   const filterDataByTimeRange = (data: ChartDataPoint[], range: string) => {
-    console.log("Filtering Chart02 data for period:", range, "Raw data:", data);
-
     const now = new Date();
     let startDate: Date;
 
@@ -100,7 +98,6 @@ export function Chart02() {
         break;
       case "last_3_months":
       default:
-        console.log("Returning unfiltered data for last_3_months");
         return data;
     }
 
@@ -136,7 +133,6 @@ export function Chart02() {
         Object.values(item).some((val) => typeof val === "number" && val > 0)
       );
 
-    console.log("Filtered Chart02 data:", filteredData);
     return filteredData;
   };
 
@@ -170,7 +166,6 @@ export function Chart02() {
           );
 
           const processedData = Object.values(dataByMonth);
-          console.log("Fetched Chart02 data:", processedData);
 
           // Generate chartConfig dynamically
           const projectKeys = Array.from(
@@ -207,7 +202,6 @@ export function Chart02() {
 
   // Update chartData when period changes (no fetch)
   useEffect(() => {
-    console.log("Chart02 period changed:", filters.period);
     const filteredData = filterDataByTimeRange(rawData, filters.period);
     setChartData(filteredData);
   }, [filters.period, rawData]);

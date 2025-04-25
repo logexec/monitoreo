@@ -145,8 +145,6 @@ export function ChartAreaInteractive() {
 
   // Filter data by time range
   const filterDataByTimeRange = (data: any[], range: string) => {
-    console.log("Filtering data for period:", range, "Raw data:", data);
-
     const now = new Date();
     let startDate: Date;
 
@@ -163,7 +161,6 @@ export function ChartAreaInteractive() {
         break;
       case "last_3_months":
       default:
-        console.log("Returning unfiltered data for last_3_months");
         return data;
     }
 
@@ -171,7 +168,6 @@ export function ChartAreaInteractive() {
       .map((item) => {
         const isProjectMode = item.isProjectMode;
         if (!item.details) {
-          console.log("No details for item:", item);
           return { ...item, trips: 0 };
         }
 
@@ -218,7 +214,6 @@ export function ChartAreaInteractive() {
           });
         }
 
-        console.log("Filtered item:", result);
         return result;
       })
       .filter(
@@ -227,7 +222,6 @@ export function ChartAreaInteractive() {
           Object.values(item).some((val) => typeof val === "number" && val > 0)
       );
 
-    console.log("Filtered data:", filteredData);
     return filteredData;
   };
 
@@ -265,7 +259,6 @@ export function ChartAreaInteractive() {
               .sort((a, b) => b.trips - a.trips)
               .filter((item) => item.trips > 0);
 
-            console.log("Fetched project mode data:", processedData);
             setRawData(processedData);
             setChartData(filterDataByTimeRange(processedData, filters.period));
             setChartConfig({
@@ -362,7 +355,6 @@ export function ChartAreaInteractive() {
               )
             );
 
-            console.log("Fetched destination mode data:", processedData);
             setRawData(processedData);
             setChartData(filterDataByTimeRange(processedData, filters.period));
           } else {
@@ -381,7 +373,6 @@ export function ChartAreaInteractive() {
 
   // Update chartData when period changes (no fetch)
   React.useEffect(() => {
-    console.log("Period changed:", filters.period);
     const filteredData = filterDataByTimeRange(rawData, filters.period);
     setChartData(filteredData);
   }, [filters.period, rawData]);
