@@ -20,7 +20,7 @@ export function SectionCards() {
         </CardHeader>
         <Chart06 />
       </Card>
-      <Card className="@container/card">
+      {/* <Card className="@container/card">
         <CardHeader className="relative">
           <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold">
             Tipo de Camiones
@@ -30,7 +30,7 @@ export function SectionCards() {
           </CardDescription>
         </CardHeader>
         <Chart04 />
-      </Card>
+      </Card> */}
       <Card className="@container/card">
         <Chart02 />
       </Card>
