@@ -53,7 +53,8 @@ export interface TripUpdate {
   trip_id: string;
   category: UpdateCategory;
   notes: string;
-  image_url?: string | null;
+  image_token?: string | null;
+  image_type?: string | null;
   created_at: string;
   updated_by: string;
 }

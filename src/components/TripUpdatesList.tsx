@@ -33,6 +33,9 @@ interface TripUpdatesListProps {
 }
 
 export function TripUpdatesList({ updates }: TripUpdatesListProps) {
+  const isLocalhost = window.location.host.includes("localhost");
+  console.log("Is Localhost", isLocalhost);
+
   if (!updates) {
     return (
       <div className="py-8 text-center text-gray-500">
@@ -50,8 +53,15 @@ export function TripUpdatesList({ updates }: TripUpdatesListProps) {
         const Icon = categoryIcons[update.category];
         const { bg, text } = updateCategoryColors[update.category];
 
-        // Detectar si la URL es un PDF
-        const isPDF = update.image_url?.endsWith(".pdf");
+        // Construir la URL de la imagen usando el endpoint /api/images/{token}
+        const imageUrl = update.image_token
+          ? isLocalhost
+            ? `http://localhost:8000/api/images/${update.image_token}`
+            : `/api/images/${update.image_token}`
+          : null;
+
+        // Detectar si es un PDF basado en image_type
+        const isPDF = update.image_type === "application/pdf";
 
         return (
           <div key={update.id} className="relative pl-16">
@@ -78,10 +88,10 @@ export function TripUpdatesList({ updates }: TripUpdatesListProps) {
                 {update.notes}
               </div>
 
-              {update.image_url && (
+              {imageUrl && (
                 <div className="mt-3">
                   <a
-                    href={update.image_url}
+                    href={imageUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group relative inline-block"
@@ -96,11 +106,25 @@ export function TripUpdatesList({ updates }: TripUpdatesListProps) {
                     ) : (
                       <>
                         <img
-                          src={update.image_url}
+                          src={imageUrl}
                           alt="Evidencia"
                           className="h-24 w-auto rounded-lg border object-cover transition-transform group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black dark:bg-white bg-opacity-0 transition-opacity group-hover:bg-opacity-20">
+                        <div
+                          style={{
+                            backgroundColor: "#00000020",
+                            backgroundImage: `url(${imageUrl})`,
+                          }}
+                          onMouseEnter={(e) => {
+                            const target = e.currentTarget as HTMLDivElement;
+                            target.style.backgroundColor = "#00000090";
+                          }}
+                          onMouseLeave={(e) => {
+                            const target = e.currentTarget as HTMLDivElement;
+                            target.style.backgroundColor = "#00000020";
+                          }}
+                          className="absolute inset-0 flex items-center justify-center bg-black dark:bg-white bg-opacity-0 transition-all duration-300 hover:b group-hover:bg-opacity-20 hover:bg-opacity-20"
+                        >
                           <ImageIcon className="h-6 w-6 text-white dark:text-black opacity-0 transition-opacity group-hover:opacity-100" />
                         </div>
                       </>

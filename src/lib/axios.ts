@@ -26,6 +26,7 @@ export const getCSRFToken = async () => {
 export async function getTrips(date?: string, projects = "all") {
   // date = new Date().toISOString().slice(0, 10),
   try {
+    await getCSRFToken();
     const response = await axios.get("/trips", {
       params: { date, projects },
     });
@@ -44,6 +45,19 @@ export async function getTripUpdates(trip_id?: string) {
     return response.data;
   } catch (error) {
     console.error("Error al obtener las actualizaciones:", error);
+    throw error;
+  }
+}
+
+export async function getTripUpdatesImage(token: string) {
+  try {
+    // await getCSRFToken();
+    const response = await axios.get(`/images/${token}`);
+    console.log("Respuesta:", response);
+    console.log("Imagen obtenida:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error al obtener los archivos:", error);
     throw error;
   }
 }
@@ -82,15 +96,21 @@ export async function updateTrip(
   tripId: string,
   category: string,
   notes: string,
-  imageUrl?: string
+  image?: File
 ) {
   try {
     await getCSRFToken();
-    const response = await axios.post("/trip-updates", {
-      trip_id: tripId,
-      category,
-      notes,
-      image_url: imageUrl || null,
+    const formData = new FormData();
+    formData.append("trip_id", tripId);
+    formData.append("category", category);
+    formData.append("notes", notes);
+    if (image) {
+      formData.append("image", image);
+    }
+    const response = await axios.post("/trip-updates", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data", // Necesario para enviar FormData
+      },
     });
     return response.data;
   } catch (error) {
@@ -118,25 +138,6 @@ export async function getPlateNumbers() {
   } catch (error) {
     console.error("Error al obtener los números de placa:", error);
     throw error;
-  }
-}
-
-export async function uploadImage(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("image", file);
-
-  try {
-    await getCSRFToken();
-    const response = await axios.post("/upload-image", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    return response.data.url;
-  } catch (error) {
-    console.error("Error al subir la imagen:", error);
-    throw new Error("No se pudo subir la imagen");
   }
 }
 

@@ -4,7 +4,7 @@ import { X, Upload } from "lucide-react";
 import { Trip, TripUpdate, UpdateCategory } from "../types/database";
 import { updateCategoryLabels } from "../constants/updateCategories";
 import { motion } from "motion/react";
-import { updateTrip, uploadImage } from "@/lib/axios";
+import { updateTrip } from "@/lib/axios";
 import { toast } from "sonner";
 import { TripProgressDialog } from "./ui/trip-progress-dialog";
 
@@ -66,29 +66,26 @@ export function TripUpdatePanel({
       const trips = Array.isArray(trip) ? trip : [trip];
       const updates: TripUpdate[] = [];
 
-      const imageUrl = file ? await uploadImage(file) : null;
-
       for (const [index, t] of trips.entries()) {
         try {
           const data = await updateTrip(
             t.id,
             category,
             notes,
-            imageUrl || undefined
+            file || undefined // Pasa el archivo directamente
           );
           if (data) {
             updates.push(data as TripUpdate);
           }
-          setProgress(index + 1); // Actualiza el progreso
+          setProgress(index + 1);
         } catch (err) {
-          // Extraer el mensaje de error
           const errorMessage =
             err instanceof Error ? err.message : "Error desconocido";
           console.error("Error con viaje ID:", t.id, err);
           setError(true);
-          setErrorMessage(errorMessage); // Actualizar el estado con el mensaje
-          toast.error(errorMessage); // Mostrar el mensaje de error específico
-          break; // Detener el proceso si ocurre un error
+          setErrorMessage(errorMessage);
+          toast.error(errorMessage);
+          break;
         }
       }
 
@@ -109,16 +106,15 @@ export function TripUpdatePanel({
         setTimeout(() => {
           setShowProgress(false);
           onClose();
-        }, 1500); // Cierre automático tras éxito
+        }, 1500);
       }
     } catch (error) {
-      // Manejar errores generales (no específicos de un viaje)
       const errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
       console.error("Error al crear actualización:", error);
       setError(true);
       setErrorMessage(errorMessage);
-      toast.error(errorMessage); // Mostrar el mensaje de error específico
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
