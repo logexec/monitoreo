@@ -128,7 +128,7 @@ export function ExpandableRow({
         </td>
         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 flex flex-col space-y-1">
           <div className="flex flex-row space-x-1 text-xs">
-            <span className="font-light">Fecha de Entrega:</span>
+            <span className="font-light">Entrega prevista:</span>
             <span className="font-medium">
               {format(parseISO(trip.delivery_date), "dd/MM/yyyy")}
             </span>
@@ -140,9 +140,9 @@ export function ExpandableRow({
             </span>
           </div>
           <div className="flex flex-row space-x-1 text-xs">
-            <span className="font-light">Actualizado el:</span>
+            <span className="font-light">Inicio de ruta:</span>
             <span className="font-medium">
-              {format(parseISO(trip.updated_at), "dd/MM/yyyy")}
+              {format(parseISO(trip.updated_at), "dd/MM/yyyy H:ii:ss")}
             </span>
           </div>
         </td>
