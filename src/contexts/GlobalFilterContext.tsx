@@ -12,6 +12,8 @@ export type GlobalFilters = {
   status: string;
   project: string;
   selectedValue: string;
+  // Para creacion de usuarios
+  password: string | null;
 };
 
 // Opciones disponibles para los filtros
@@ -36,6 +38,7 @@ const defaultFilters: GlobalFilters = {
   status: "all",
   project: "all",
   selectedValue: "off",
+  password: null,
 };
 
 const defaultOptions: FilterOptions = {

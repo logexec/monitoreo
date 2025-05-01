@@ -35,11 +35,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCSRFToken } from "@/lib/axios";
 import CopyToClipboardAlert from "./CopyToClipboardAlert";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 
 interface User {
   id: number;
   name: string;
   email: string;
+  password: string;
 }
 
 const UserManagement: React.FC = () => {
@@ -56,6 +58,11 @@ const UserManagement: React.FC = () => {
     message: string;
   } | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  const { filters, setFilters } = useGlobalFilters();
+
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -100,7 +107,7 @@ const UserManagement: React.FC = () => {
   };
 
   const addUser = async () => {
-    if (!name || !email) {
+    if (!name || !email || !filters.password) {
       showNotification("error", "Nombre y email son requeridos");
       return;
     }
@@ -108,7 +115,7 @@ const UserManagement: React.FC = () => {
     setSubmitting(true);
     try {
       await getCSRFToken();
-      await axios.post("/users", { name, email });
+      await axios.post("/users", { name, email, password });
       fetchUsers();
       setName("");
       setEmail("");
@@ -116,6 +123,13 @@ const UserManagement: React.FC = () => {
       showNotification("success", "Operador añadido correctamente");
     } catch (error) {
       console.error(error);
+      if (axios.isAxiosError(error) && error.response) {
+        console.error("Error response:", error.response.data);
+        setErrors(error.response.data.message || "Error en la solicitud");
+      } else {
+        console.error("Error desconocido:", error);
+        setErrors(error instanceof Error ? error.message : "Error inesperado");
+      }
       showNotification("error", "Error al añadir operador");
     } finally {
       setSubmitting(false);
@@ -391,6 +405,25 @@ const UserManagement: React.FC = () => {
                 placeholder="correo@ejemplo.com"
                 className="w-full border-slate-300 dark:border-slate-700 focus:border-slate-500 focus:ring-slate-500"
               />
+            </div>
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Contraseña
+              </label>
+              <Input
+                id="password"
+                type="password"
+                value={filters.password || ""}
+                onChange={(e) => {
+                  setFilters((prev) => ({ ...prev, password: e.target.value }));
+                  setPassword(filters.password || "");
+                }}
+                className="w-full border-slate-300 dark:border-slate-700 focus:border-slate-500 focus:ring-slate-500"
+              />
+              {errors && <span className="text-red-700">{errors}</span>}
             </div>
           </div>
           <CopyToClipboardAlert />

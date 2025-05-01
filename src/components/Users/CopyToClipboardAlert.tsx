@@ -2,13 +2,15 @@ import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Copy, CopyCheckIcon, Info } from "lucide-react";
 import { toast } from "sonner";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 
 const CopyToClipboardAlert = () => {
   const [copied, setCopied] = useState(false);
-  const password = "Monitoreo2025";
+  const { filters } = useGlobalFilters();
+  const password = filters.password;
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(password).then(() => {
+    navigator.clipboard.writeText(password!).then(() => {
       setCopied(true);
       toast.info("Contraseña copiada al portapapeles");
       setTimeout(() => setCopied(false), 2000); // Restaurar el estado después de 2 segundos
@@ -25,12 +27,12 @@ const CopyToClipboardAlert = () => {
       </div>
       <AlertDescription className="mt-1.5 flex items-center justify-center space-x-2">
         <span className="text-sm text-gray-700 dark:text-gray-300">
-          La contraseña por defecto es
+          La contraseña asignada al operador es
         </span>
         <div className="relative border rounded border-sky-200 dark:border-sky-800 px-0.5 py-1 w-40">
           <input
             type="text"
-            value={password}
+            value={password || ""}
             readOnly
             className="bg-transparent focus:outline-hidden cursor-pointer text-sm text-sky-600 dark:text-sky-400 pl-4"
           />
