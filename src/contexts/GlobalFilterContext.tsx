@@ -35,7 +35,7 @@ const defaultFilters: GlobalFilters = {
   search: "",
   status: "all",
   project: "all",
-  selectedValue: "on",
+  selectedValue: "off",
 };
 
 const defaultOptions: FilterOptions = {
