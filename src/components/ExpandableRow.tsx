@@ -122,7 +122,7 @@ export function ExpandableRow({
         </td> */}
         <td
           onClick={() => onTripSelect(trip)}
-          className="px-4 py-4 whitespace-nowrap text-sm text-black dark:text-white max-w-[10ch] font-bold"
+          className="px-4 py-4 whitespace-nowrap text-sm text-black dark:text-white max-w-[10ch] font-bold cursor-pointer"
         >
           {trip.plate_number.slice(0, 3)}-{trip.plate_number.slice(3)}
         </td>
