@@ -108,7 +108,7 @@ export function ExpandableRow({
             )}
           </button>
         </td>
-        <td onClick={() => onTripSelect(trip)} className="pl-6">
+        {/* <td onClick={() => onTripSelect(trip)} className="pl-6">
           <TooltipProvider>
             <Tooltip delayDuration={200}>
               <TooltipTrigger className="py-0.5 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer text-start truncate max-w-[18ch]">
@@ -119,15 +119,32 @@ export function ExpandableRow({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        </td>
-        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 max-w-[10ch]">
-          {format(parseISO(trip.delivery_date), "dd/MM/yyyy")}
-        </td>
-        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+        </td> */}
+        <td
+          onClick={() => onTripSelect(trip)}
+          className="px-4 py-4 whitespace-nowrap text-sm text-black dark:text-white max-w-[10ch] font-bold"
+        >
           {trip.plate_number.slice(0, 3)}-{trip.plate_number.slice(3)}
         </td>
-        <td className="py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 text-center">
-          {trip.vehicle_id || "—"}
+        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 flex flex-col space-y-1">
+          <div className="flex flex-row space-x-1 text-xs">
+            <span className="font-light">Fecha de Entrega:</span>
+            <span className="font-medium">
+              {format(parseISO(trip.delivery_date), "dd/MM/yyyy")}
+            </span>
+          </div>
+          <div className="flex flex-row space-x-1 text-xs">
+            <span className="font-light">Creado el:</span>
+            <span className="font-medium">
+              {format(parseISO(trip.created_at), "dd/MM/yyyy")}
+            </span>
+          </div>
+          <div className="flex flex-row space-x-1 text-xs">
+            <span className="font-light">Actualizado el:</span>
+            <span className="font-medium">
+              {format(parseISO(trip.updated_at), "dd/MM/yyyy")}
+            </span>
+          </div>
         </td>
         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 min-w-[140px] capitalize">
           <div className="flex flex-col space-y-0">
@@ -248,10 +265,16 @@ export function ExpandableRow({
           </div>
         </td>
         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-          {trip.origin || "—"}
-        </td>
-        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-          {trip.destination}
+          <div className="flex flex-col space-y-1">
+            <div className="flex flex-row text-xs space-x-1">
+              <span className="font-light">Origen:</span>
+              <span className="font-medium">{trip.origin || "—"}</span>
+            </div>
+            <div className="flex flex-row text-xs space-x-1">
+              <span className="font-light">Destino:</span>
+              <span className="font-medium">{trip.destination || "—"}</span>
+            </div>
+          </div>
         </td>
         <td className="pl-6">
           <TooltipProvider>
