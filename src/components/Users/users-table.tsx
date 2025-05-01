@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -41,7 +42,6 @@ interface User {
   id: number;
   name: string;
   email: string;
-  password: string;
 }
 
 const UserManagement: React.FC = () => {
@@ -58,11 +58,9 @@ const UserManagement: React.FC = () => {
     message: string;
   } | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [errors, setErrors] = useState<string | null>(null);
 
   const { filters, setFilters } = useGlobalFilters();
-
-  const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -97,6 +95,7 @@ const UserManagement: React.FC = () => {
   const handleAddDialogOpen = () => {
     setName("");
     setEmail("");
+    setFilters((prev) => ({ ...prev, password: "" })); // Inicializar password
     setIsAddDialogOpen(true);
   };
 
@@ -108,17 +107,22 @@ const UserManagement: React.FC = () => {
 
   const addUser = async () => {
     if (!name || !email || !filters.password) {
-      showNotification("error", "Nombre y email son requeridos");
+      showNotification("error", "Nombre, email y contraseña son requeridos");
       return;
     }
 
     setSubmitting(true);
     try {
       await getCSRFToken();
-      await axios.post("/users", { name, email, password });
+      await axios.post("/users", {
+        name,
+        email,
+        password: filters.password,
+      });
       fetchUsers();
       setName("");
       setEmail("");
+      setFilters((prev) => ({ ...prev, password: "" }));
       setIsAddDialogOpen(false);
       showNotification("success", "Operador añadido correctamente");
     } catch (error) {
@@ -178,7 +182,6 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  // Optimización del filtrado para evitar congelamientos
   const filteredUsers = React.useMemo(() => {
     if (!searchTerm) return users;
     const term = searchTerm.toLowerCase();
@@ -377,7 +380,7 @@ const UserManagement: React.FC = () => {
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium  dark:text-slate-300 mb-1"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
                 Nombre completo
               </label>
@@ -419,7 +422,6 @@ const UserManagement: React.FC = () => {
                 value={filters.password || ""}
                 onChange={(e) => {
                   setFilters((prev) => ({ ...prev, password: e.target.value }));
-                  setPassword(filters.password || "");
                 }}
                 className="w-full border-slate-300 dark:border-slate-700 focus:border-slate-500 focus:ring-slate-500"
               />

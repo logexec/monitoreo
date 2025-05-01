@@ -16,17 +16,25 @@ import { useAuth } from "@/contexts/AuthContext";
 // Interfaz extendida solo para UpdatesPage
 interface ExtendedTripUpdate extends TripUpdate {
   trip?: {
-    trip_id?: string; // Usamos system_trip_id en el mapeo
-    system_trip_id?: string; // Usamos system_trip_id en el mapeo
+    trip_id?: string;
+    system_trip_id?: string;
     plate_number: string;
     project: string;
+    driver_name: string;
+    driver_phone: string;
   };
 }
 
 export function UpdatesPage() {
   const [updates, setUpdates] = useState<
     (TripUpdate & {
-      trip: { trip_id: string; plate_number: string; project: string };
+      trip: {
+        trip_id: string;
+        plate_number: string;
+        project: string;
+        driver_name: string;
+        driver_phone: string;
+      };
     })[]
   >([]);
   const [search, setSearch] = useState("");
@@ -52,6 +60,8 @@ export function UpdatesPage() {
             trip_id: update.trip!.system_trip_id || "—",
             plate_number: update.trip!.plate_number || "—",
             project: update.trip!.project || "—",
+            driver_name: update.trip!.driver_name || "—",
+            driver_phone: update.trip!.driver_phone || "—",
           },
         };
       });
@@ -112,15 +122,6 @@ export function UpdatesPage() {
                   <tr>
                     <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
                       <SortableHeader
-                        label="ID Viaje"
-                        field="trip_id"
-                        currentField={sortConfig.field}
-                        direction={sortConfig.direction}
-                        onSort={handleSort}
-                      />
-                    </th>
-                    <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                      <SortableHeader
                         label="Placa"
                         field="plate_number"
                         currentField={sortConfig.field}
@@ -132,6 +133,15 @@ export function UpdatesPage() {
                       <SortableHeader
                         label="Proyecto"
                         field="project"
+                        currentField={sortConfig.field}
+                        direction={sortConfig.direction}
+                        onSort={handleSort}
+                      />
+                    </th>
+                    <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
+                      <SortableHeader
+                        label="Conductor"
+                        field="driver_name"
                         currentField={sortConfig.field}
                         direction={sortConfig.direction}
                         onSort={handleSort}
@@ -153,6 +163,15 @@ export function UpdatesPage() {
                     </th>
                     <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
                       <SortableHeader
+                        label="Reportado por"
+                        field="updated_by"
+                        currentField={sortConfig.field}
+                        direction={sortConfig.direction}
+                        onSort={handleSort}
+                      />
+                    </th>
+                    <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
+                      <SortableHeader
                         label="Fecha"
                         field="created_at"
                         currentField={sortConfig.field}
@@ -168,14 +187,25 @@ export function UpdatesPage() {
                       key={update.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-950"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {update.trip?.trip_id || "—"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white font-medium">
                         {update.trip?.plate_number || "—"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {update.trip?.project || "—"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex flex-row space-x-1">
+                          <span className="font-light">Chofer:</span>
+                          <span className="font-medium">
+                            {update.trip.driver_name}
+                          </span>
+                        </div>
+                        <div className="flex flex-row space-x-1">
+                          <span className="font-light">Contacto:</span>
+                          <span className="font-medium">
+                            {update.trip.driver_phone}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <StatusBadge category={update.category} />
@@ -183,10 +213,20 @@ export function UpdatesPage() {
                       <td className="px-6 py-4 text-sm text-gray-500 max-w-md">
                         <div className="line-clamp-2">{update.notes}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {format(new Date(update.created_at), "dd-MMM-yy H:mm", {
-                          locale: es,
-                        })}
+                      <td className="px-6 py-4 text-sm text-gray-500 max-w-md">
+                        <div className="line-clamp-2">{update.user.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize flex flex-col space-y-0">
+                        <span>
+                          {format(new Date(update.created_at), "dd-MMM-yy", {
+                            locale: es,
+                          })}
+                        </span>
+                        <span>
+                          {format(new Date(update.created_at), "H:i:s", {
+                            locale: es,
+                          })}
+                        </span>
                       </td>
                     </tr>
                   ))}

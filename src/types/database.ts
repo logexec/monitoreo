@@ -108,8 +108,3 @@ export interface User {
   name: string;
   email: string;
 }
-
-// interface Column {
-//   Header: string;
-//   accessor: keyof User;
-// }
