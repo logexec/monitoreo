@@ -18,6 +18,62 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, isLoading } = useAuth();
 
   if (isLoading || !user) return null; // No renderiza nada hasta obtener los datos
+  const isAdmin =
+    user.email === "jk@logex.ec" ||
+    user.email === "juan.jara@logex.ec" ||
+    user.email === "jhony.vallejo@logex.ec" ||
+    user.email === "ricardo.estrella@logex.ec";
+
+  const items = isAdmin
+    ? [
+        {
+          title: "Administración",
+          url: "#",
+          icon: Shield,
+          isActive: true,
+          items: [{ title: "Usuarios", url: "/users" }],
+        },
+        {
+          title: "Viajes",
+          url: "#",
+          icon: Truck,
+          isActive: true,
+          items: [
+            { title: "Lista de viajes", url: "/trips" },
+            // { title: "Nuevo viaje", url: "/new-trip" },
+            // { title: "Cargar viajes (Excel)", url: "/upload" },
+            { title: "Historial", url: "/updates" },
+          ],
+        },
+        {
+          title: "GPS",
+          url: "#",
+          icon: LocateFixedIcon,
+          isActive: true,
+          items: [{ title: "Historial de alertas", url: "/gps-history" }],
+        },
+      ]
+    : [
+        {
+          title: "Viajes",
+          url: "#",
+          icon: Truck,
+          isActive: true,
+          items: [
+            { title: "Lista de viajes", url: "/trips" },
+            // { title: "Nuevo viaje", url: "/new-trip" },
+            // { title: "Cargar viajes (Excel)", url: "/upload" },
+            { title: "Historial", url: "/updates" },
+          ],
+        },
+        {
+          title: "GPS",
+          url: "#",
+          icon: LocateFixedIcon,
+          isActive: true,
+          items: [{ title: "Historial de alertas", url: "/gps-history" }],
+        },
+      ];
 
   return (
     <Sidebar collapsible="icon" {...props} className="z-50">
@@ -28,36 +84,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavDashboard />
-        <NavMain
-          items={[
-            {
-              title: "Administración",
-              url: "#",
-              icon: Shield,
-              isActive: true,
-              items: [{ title: "Usuarios", url: "/users" }],
-            },
-            {
-              title: "Viajes",
-              url: "#",
-              icon: Truck,
-              isActive: true,
-              items: [
-                { title: "Lista de viajes", url: "/trips" },
-                // { title: "Nuevo viaje", url: "/new-trip" },
-                // { title: "Cargar viajes (Excel)", url: "/upload" },
-                { title: "Historial", url: "/updates" },
-              ],
-            },
-            {
-              title: "GPS",
-              url: "#",
-              icon: LocateFixedIcon,
-              isActive: true,
-              items: [{ title: "Historial de alertas", url: "/gps-history" }],
-            },
-          ]}
-        />
+        <NavMain items={items} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
