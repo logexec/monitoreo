@@ -6,9 +6,11 @@ import Loading from "@/components/Loading";
 import Cookies from "js-cookie";
 
 interface AuthContextType {
-  user: { name: string; email: string } | null;
+  user: { name: string; email: string; isAdmin: boolean } | null;
   isLoading: boolean;
-  setUser: (user: { name: string; email: string } | null) => void; // Añadir para actualizar manualmente
+  setUser: (
+    user: { name: string; email: string; isAdmin: boolean } | null
+  ) => void; // Añadir para actualizar manualmente
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,9 +24,11 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<{ name: string; email: string } | null>(
-    null
-  );
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+    isAdmin: boolean;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Cargar usuario inicial
@@ -36,6 +40,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     async function fetchUser() {
       const authenticatedUser = await getUser();
+      const isAdmin =
+        authenticatedUser.email === "jk@logex.ec" ||
+        authenticatedUser.email === "juan.jara@logex.ec" ||
+        authenticatedUser.email === "jhony.vallejo@logex.ec" ||
+        authenticatedUser.email === "ricardo.estrella@logex.ec";
+      authenticatedUser["isAdmin"] = isAdmin;
+
       setUser(authenticatedUser);
       setIsLoading(false);
     }

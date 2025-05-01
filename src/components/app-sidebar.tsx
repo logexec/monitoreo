@@ -18,13 +18,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, isLoading } = useAuth();
 
   if (isLoading || !user) return null; // No renderiza nada hasta obtener los datos
-  const isAdmin =
-    user.email === "jk@logex.ec" ||
-    user.email === "juan.jara@logex.ec" ||
-    user.email === "jhony.vallejo@logex.ec" ||
-    user.email === "ricardo.estrella@logex.ec";
 
-  const items = isAdmin
+  const items = user.isAdmin
     ? [
         {
           title: "Administración",
