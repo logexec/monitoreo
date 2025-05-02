@@ -214,9 +214,7 @@ export function UpdatesPage() {
                         <div className="line-clamp-2">{update.notes}</div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 max-w-md">
-                        <div className="line-clamp-2">
-                          {update.user!.name || "-"}
-                        </div>
+                        <div className="line-clamp-2">{update.user?.name}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize flex flex-col space-y-0">
                         <span>
