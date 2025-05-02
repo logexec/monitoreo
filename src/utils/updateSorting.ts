@@ -8,8 +8,8 @@ type UpdateWithTrip = TripUpdate & {
     project: string;
     driver_name: string;
     driver_phone: string;
-    user?: User;
   };
+  user?: User;
 };
 
 export function sortUpdates(
