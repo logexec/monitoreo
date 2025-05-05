@@ -218,10 +218,27 @@ export function UpdatesPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize flex flex-col space-y-0">
                         <span>
-                          {format(new Date(update.created_at), "dd-MMM-yy")}
+                          {new Date(update.created_at).toLocaleDateString(
+                            "es-EC",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}
                         </span>
                         <span>
-                          {format(new Date(update.created_at), "HH:mm:ss")}
+                          {
+                            new Date(update.created_at)
+                              .toLocaleDateString("es-Ec", {
+                                hour: "2-digit",
+                                hour12: true,
+                                minute: "2-digit",
+                                second: "2-digit",
+                              })
+                              .split(", ")[1]
+                              .split(" ")[0]
+                          }
                         </span>
                       </td>
                     </tr>
