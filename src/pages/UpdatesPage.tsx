@@ -226,8 +226,8 @@ export function UpdatesPage() {
                           )}
                         </span>
                         <span>
-                          {new Date(update.created_at).getHours()} :{" "}
-                          {new Date(update.created_at).getMinutes()} :{" "}
+                          {new Date(update.created_at).getHours()}:
+                          {new Date(update.created_at).getMinutes()}:
                           {new Date(update.created_at).getSeconds()}
                         </span>
                       </td>
