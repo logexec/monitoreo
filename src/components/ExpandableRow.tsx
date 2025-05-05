@@ -57,7 +57,9 @@ export function ExpandableRow({
   }, me comunico con usted desde la torre de control sobre el siguiente viaje:
 \nID: ${trip.external_trip_id}
 \nRuta: ${trip.origin} → ${trip.destination}
-\nFecha de entrega: ${format(parseISO(trip.delivery_date), "dd/MM/yyyy")}
+\nFecha de entrega: ${new Date(trip.delivery_date).toLocaleDateString("es-Ec", {
+    dateStyle: "medium",
+  })}
 \nEstado actual: ${statusLabels[trip.current_status]}.
 \n`;
 
@@ -130,13 +132,13 @@ export function ExpandableRow({
           <div className="flex flex-row space-x-1 text-xs">
             <span className="font-light">Entrega prevista:</span>
             <span className="font-medium">
-              {format(parseISO(trip.delivery_date), "dd/MM/yyyy")}
+              {new Date(trip.delivery_date).toLocaleDateString("es-Ec")}
             </span>
           </div>
           <div className="flex flex-row space-x-1 text-xs">
             <span className="font-light">Creado el:</span>
             <span className="font-medium">
-              {format(parseISO(trip.created_at), "dd/MM/yyyy")}
+              {new Date(trip.created_at).toLocaleDateString("es-Ec")}
             </span>
           </div>
           <div className="flex flex-row space-x-1 text-xs">
