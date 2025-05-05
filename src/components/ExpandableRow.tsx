@@ -144,7 +144,7 @@ export function ExpandableRow({
           <div className="flex flex-row space-x-1 text-xs">
             <span className="font-light">Inicio de ruta:</span>
             <span className="font-medium">
-              {format(parseISO(trip.updated_at), "dd/MM/yyyy H:ii:ss")}
+              {format(parseISO(trip?.updated_at), "dd/MM/yyyy H:ii:ss")}
             </span>
           </div>
         </td>
