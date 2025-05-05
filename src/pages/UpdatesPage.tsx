@@ -226,17 +226,9 @@ export function UpdatesPage() {
                           )}
                         </span>
                         <span>
-                          {
-                            new Date(update.created_at)
-                              .toLocaleDateString("es-Ec", {
-                                hour: "2-digit",
-                                hour12: true,
-                                minute: "2-digit",
-                                second: "2-digit",
-                              })
-                              .split(", ")[1]
-                              .split(" ")[0]
-                          }
+                          {new Date(update.created_at).getHours()} :{" "}
+                          {new Date(update.created_at).getMinutes()} :{" "}
+                          {new Date(update.created_at).getSeconds()}
                         </span>
                       </td>
                     </tr>
