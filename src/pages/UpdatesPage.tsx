@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { TripUpdate } from "../types/database";
 import { StatusBadge } from "../components/StatusBadge";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { SortableHeader } from "../components/SortableHeader";
 import { SearchInput } from "../components/SearchInput";
 import { StatusFilter } from "../components/StatusFilter";
