@@ -223,7 +223,7 @@ export function UpdatesPage() {
                           })}
                         </span>
                         <span>
-                          {format(new Date(update.created_at), "HH:ii:ss", {
+                          {format(new Date(update.created_at), "HH:mm:ss", {
                             locale: es,
                           })}
                         </span>
