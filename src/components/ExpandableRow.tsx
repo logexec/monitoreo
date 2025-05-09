@@ -277,7 +277,9 @@ export function ExpandableRow({
             </div>
             <div className="flex flex-row text-xs space-x-1">
               <span className="font-light">No. Viaje:</span>
-              <span className="font-medium">{trip.trip_id || "—"}</span>
+              <span className="font-medium">
+                {trip.external_trip_id || "—"}
+              </span>
             </div>
           </div>
         </td>
