@@ -275,6 +275,10 @@ export function ExpandableRow({
               <span className="font-light">Destino:</span>
               <span className="font-medium">{trip.destination || "—"}</span>
             </div>
+            <div className="flex flex-row text-xs space-x-1">
+              <span className="font-light">No. Viaje:</span>
+              <span className="font-medium">{trip.trip_id || "—"}</span>
+            </div>
           </div>
         </td>
         <td className="pl-6">
