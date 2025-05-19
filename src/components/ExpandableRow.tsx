@@ -87,7 +87,7 @@ export function ExpandableRow({
         className={cn(
           "transition-colors duration-500 group",
           "hover:bg-gray-50 dark:hover:bg-gray-950",
-          minutesSinceUpdate >= 15
+          minutesSinceUpdate >= 20
             ? "bg-alert bg-red-600 dark:bg-red-700 sticky top-[40px] z-20 text-white group-[.bg-alert]:text-white hover:bg-red-700 dark:hover:bg-red-600"
             : minutesSinceUpdate >= 13
             ? "bg-orange-500 text-black"

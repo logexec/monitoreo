@@ -38,16 +38,6 @@ export function TripList() {
   const uniqueProjects = [...new Set(trips.map((t) => t.project))].sort();
   const projectOptions = uniqueProjects.map((p) => ({ value: p, label: p }));
 
-  // const [nowTick, setNowTick] = useState(Date.now());
-
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setNowTick(Date.now()); // fuerza re-render
-  //   }, 10_000); // cada segundo
-
-  //   return () => clearInterval(interval);
-  // }, []);
-
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -233,11 +223,11 @@ export function TripList() {
     };
   });
   const overdueTrips = enrichedTrips
-    .filter((t) => t.minutesSinceUpdate >= 15)
+    .filter((t) => t.minutesSinceUpdate >= 20)
     .sort((a, b) => b.secondsSinceUpdate - a.secondsSinceUpdate); // más antiguos arriba
 
   const recentTrips = enrichedTrips
-    .filter((t) => t.minutesSinceUpdate < 15)
+    .filter((t) => t.minutesSinceUpdate < 20)
     .sort((a, b) => b.secondsSinceUpdate - a.secondsSinceUpdate); // más antiguos arriba también
 
   const sortedTrips = [...overdueTrips, ...recentTrips];
