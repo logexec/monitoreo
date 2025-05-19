@@ -38,22 +38,22 @@ export function TripList() {
   const uniqueProjects = [...new Set(trips.map((t) => t.project))].sort();
   const projectOptions = uniqueProjects.map((p) => ({ value: p, label: p }));
 
-  const [nowTick, setNowTick] = useState(Date.now());
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setNowTick(Date.now()); // fuerza re-render
-    }, 10_000); // cada segundo
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // const [now, setNow] = useState(Date.now());
+  // const [nowTick, setNowTick] = useState(Date.now());
 
   // useEffect(() => {
-  //   const interval = setInterval(() => setNow(Date.now()), 1000); // actualiza cada segundo
+  //   const interval = setInterval(() => {
+  //     setNowTick(Date.now()); // fuerza re-render
+  //   }, 10_000); // cada segundo
+
   //   return () => clearInterval(interval);
   // }, []);
+
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000); // actualiza cada segundo
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (location.state?.filtersOverride) {
@@ -216,26 +216,31 @@ export function TripList() {
     return matchesSearch && matchesStatus && matchesProject;
   });
 
-  const getMinutesSinceUpdate = (trip: Trip): number => {
+  // const getMinutesSinceUpdate = (trip: Trip): number => {
+  //   const lastUpdate = trip.updates?.[0]?.created_at || trip.updated_at;
+  //   const updatedTime = new Date(lastUpdate);
+  //   return (nowTick - updatedTime.getTime()) / 60000;
+  // };
+
+  const enrichedTrips = filteredTrips.map((trip) => {
     const lastUpdate = trip.updates?.[0]?.created_at || trip.updated_at;
-    const updatedTime = new Date(lastUpdate);
-    return (nowTick - updatedTime.getTime()) / 60000;
-  };
-
-  const enrichedTrips = filteredTrips.map((trip) => ({
-    ...trip,
-    minutesSinceUpdate: getMinutesSinceUpdate(trip),
-  }));
-
+    const updatedTime = new Date(lastUpdate).getTime();
+    const diffSeconds = Math.floor((now - updatedTime) / 1000);
+    return {
+      ...trip,
+      secondsSinceUpdate: diffSeconds,
+      minutesSinceUpdate: diffSeconds / 60,
+    };
+  });
   const overdueTrips = enrichedTrips
     .filter((t) => t.minutesSinceUpdate >= 15)
-    .sort((a, b) => a.minutesSinceUpdate - b.minutesSinceUpdate);
+    .sort((a, b) => b.secondsSinceUpdate - a.secondsSinceUpdate); // más antiguos arriba
 
-  const timelyTrips = enrichedTrips
+  const recentTrips = enrichedTrips
     .filter((t) => t.minutesSinceUpdate < 15)
-    .sort((a, b) => a.minutesSinceUpdate - b.minutesSinceUpdate); // de más viejo a más nuevo
+    .sort((a, b) => b.secondsSinceUpdate - a.secondsSinceUpdate); // más antiguos arriba también
 
-  const sortedTrips = [...overdueTrips, ...timelyTrips];
+  const sortedTrips = [...overdueTrips, ...recentTrips];
 
   if (isLoading) {
     return <Loading text="Cargando viajes..." fullScreen />;
@@ -411,7 +416,9 @@ export function TripList() {
                   }
                   onTripSelect={setSelectedTrip}
                   updates={trip.updates || []}
+                  secondsSinceUpdate={trip.secondsSinceUpdate}
                   minutesSinceUpdate={trip.minutesSinceUpdate}
+                  isAlert={trip.minutesSinceUpdate >= 15}
                 />
               ))
             ) : (

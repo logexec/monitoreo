@@ -31,7 +31,9 @@ interface ExpandableRowProps {
   onToggleSelect: (checked: boolean, event?: React.MouseEvent) => void;
   onTripSelect: (trip: Trip) => void;
   updates: TripUpdate[];
+  secondsSinceUpdate?: number;
   minutesSinceUpdate?: number;
+  isAlert: boolean;
 }
 
 export function ExpandableRow({
