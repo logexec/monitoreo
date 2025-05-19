@@ -408,7 +408,7 @@ export function TripList() {
                   updates={trip.updates || []}
                   secondsSinceUpdate={trip.secondsSinceUpdate}
                   minutesSinceUpdate={trip.minutesSinceUpdate}
-                  isAlert={trip.minutesSinceUpdate >= 15}
+                  isAlert={trip.minutesSinceUpdate >= 20}
                 />
               ))
             ) : (
