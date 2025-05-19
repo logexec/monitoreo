@@ -206,12 +206,6 @@ export function TripList() {
     return matchesSearch && matchesStatus && matchesProject;
   });
 
-  // const getMinutesSinceUpdate = (trip: Trip): number => {
-  //   const lastUpdate = trip.updates?.[0]?.created_at || trip.updated_at;
-  //   const updatedTime = new Date(lastUpdate);
-  //   return (nowTick - updatedTime.getTime()) / 60000;
-  // };
-
   const enrichedTrips = filteredTrips.map((trip) => {
     const lastUpdate = trip.updates?.[0]?.created_at || trip.updated_at;
     const updatedTime = new Date(lastUpdate).getTime();
@@ -223,14 +217,15 @@ export function TripList() {
     };
   });
   const overdueTrips = enrichedTrips
-    .filter((t) => t.minutesSinceUpdate >= 20)
-    .sort((a, b) => b.secondsSinceUpdate - a.secondsSinceUpdate); // más antiguos arriba
+  .filter((t) => t.secondsSinceUpdate >= 1200) // 20 minutos
+  .sort((a, b) => b.secondsSinceUpdate - a.secondsSinceUpdate);
 
-  const recentTrips = enrichedTrips
-    .filter((t) => t.minutesSinceUpdate < 20)
-    .sort((a, b) => b.secondsSinceUpdate - a.secondsSinceUpdate); // más antiguos arriba también
+const recentTrips = enrichedTrips
+  .filter((t) => t.secondsSinceUpdate < 1200)
+  .sort((a, b) => b.secondsSinceUpdate - a.secondsSinceUpdate);
 
-  const sortedTrips = [...overdueTrips, ...recentTrips];
+const sortedTrips = [...overdueTrips, ...recentTrips];
+
 
   if (isLoading) {
     return <Loading text="Cargando viajes..." fullScreen />;
