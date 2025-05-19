@@ -9,7 +9,6 @@ import { SearchInput } from "./SearchInput";
 import { SortableHeader } from "./SortableHeader";
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
 import { SortConfig } from "../types/sorting";
-import { sortTrips } from "../utils/sorting";
 import { getTrips } from "@/lib/axios";
 import Loading from "./Loading";
 import CustomSwitch from "./ui/CustomSwitch";
@@ -38,6 +37,23 @@ export function TripList() {
 
   const uniqueProjects = [...new Set(trips.map((t) => t.project))].sort();
   const projectOptions = uniqueProjects.map((p) => ({ value: p, label: p }));
+
+  const [nowTick, setNowTick] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNowTick(Date.now()); // fuerza re-render
+    }, 10_000); // cada segundo
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // const [now, setNow] = useState(Date.now());
+
+  // useEffect(() => {
+  //   const interval = setInterval(() => setNow(Date.now()), 1000); // actualiza cada segundo
+  //   return () => clearInterval(interval);
+  // }, []);
 
   useEffect(() => {
     if (location.state?.filtersOverride) {
@@ -200,7 +216,26 @@ export function TripList() {
     return matchesSearch && matchesStatus && matchesProject;
   });
 
-  const sortedTrips = sortTrips(filteredTrips, sortConfig) || [];
+  const getMinutesSinceUpdate = (trip: Trip): number => {
+    const lastUpdate = trip.updates?.[0]?.created_at || trip.updated_at;
+    const updatedTime = new Date(lastUpdate);
+    return (nowTick - updatedTime.getTime()) / 60000;
+  };
+
+  const enrichedTrips = filteredTrips.map((trip) => ({
+    ...trip,
+    minutesSinceUpdate: getMinutesSinceUpdate(trip),
+  }));
+
+  const overdueTrips = enrichedTrips
+    .filter((t) => t.minutesSinceUpdate >= 15)
+    .sort((a, b) => a.minutesSinceUpdate - b.minutesSinceUpdate);
+
+  const timelyTrips = enrichedTrips
+    .filter((t) => t.minutesSinceUpdate < 15)
+    .sort((a, b) => a.minutesSinceUpdate - b.minutesSinceUpdate); // de más viejo a más nuevo
+
+  const sortedTrips = [...overdueTrips, ...timelyTrips];
 
   if (isLoading) {
     return <Loading text="Cargando viajes..." fullScreen />;
@@ -209,8 +244,9 @@ export function TripList() {
   // const uniqueProjects = [...new Set(trips.map((trip) => trip.project))].sort();
 
   return (
-    <div className="space-y-4 p-5 lg:max-w-[1024px] xl:max-w-[1280px] 2xl:max-w-[1536px] mx-auto">
+    <div className="space-y-4 py-5 px-2 mx-auto">
       {/* <div className="space-y-4 p-5 max-w-[1700px] screen-xl:max-w-[1280px] screen-2xl:max-w-[1536px] screen-3xl:max-w-[1600px] screen-4xl:max-w-[1800px] screen-5xl:max-w-[2000px] screen-6xl:max-w-[2200px] mx-auto"> */}
+      {/* Filter Section */}
       <div className="flex gap-4">
         <div className="flex-1">
           <SearchInput
@@ -249,7 +285,9 @@ export function TripList() {
         />
       </div>
 
-      <div className="bg-white dark:bg-black rounded-lg shadow-sm overflow-x-auto relative max-h-[calc(100vh-190px)]">
+      {/* Table Section */}
+
+      <div className="bg-white dark:bg-black rounded-lg shadow-sm overflow-x-auto relative max-h-[calc(100vh-150px)] max-w-[calc(100vw-150px)]">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead className="bg-gray-800">
             <tr>
@@ -373,6 +411,7 @@ export function TripList() {
                   }
                   onTripSelect={setSelectedTrip}
                   updates={trip.updates || []}
+                  minutesSinceUpdate={trip.minutesSinceUpdate}
                 />
               ))
             ) : (

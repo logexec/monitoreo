@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { User } from "@/types/database";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -7,6 +8,21 @@ const sanctumCsrfUrl = import.meta.env.VITE_SANCTUM_CSRF_URL;
 // Configuración global de Axios
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 axios.defaults.withCredentials = true; // Se envían las cookies en cada petición
+
+/**
+ * Cache global 
+ */
+const tripUpdateCache: {
+  data: any;
+  timestamp: number;
+  trip_id?: string;
+  quantity?: string;
+} = {
+  data: null,
+  timestamp: 0,
+};
+
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutos
 
 /**
  * Obtiene la cookie CSRF y actualiza el header X-XSRF-TOKEN en Axios.
@@ -37,11 +53,32 @@ export async function getTrips(date?: string, projects = "all") {
   }
 }
 
-export async function getTripUpdates(trip_id?: string) {
+export async function getTripUpdates(trip_id?: string, quantity?: string) {
+  const now = Date.now();
+
+  // Condición para reutilizar caché
+  const isSameRequest =
+    tripUpdateCache.trip_id === trip_id &&
+    tripUpdateCache.quantity === quantity;
+
+  const isCacheValid = now - tripUpdateCache.timestamp < CACHE_DURATION_MS;
+
+  if (isSameRequest && isCacheValid && tripUpdateCache.data) {
+    console.log("Usando datos en caché de trip updates");
+    return tripUpdateCache.data;
+  }
+
   try {
-    const response = await axios.get(`/trip-updates`, {
+    const response = await axios.get(`/trip-updates?qty=${quantity}`, {
       params: { trip_id },
     });
+
+    // Guardar en caché
+    tripUpdateCache.data = response.data;
+    tripUpdateCache.timestamp = now;
+    tripUpdateCache.trip_id = trip_id;
+    tripUpdateCache.quantity = quantity;
+
     return response.data;
   } catch (error) {
     console.error("Error al obtener las actualizaciones:", error);

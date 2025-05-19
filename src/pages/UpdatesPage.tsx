@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useEffect, useId, useState } from "react";
 import { TripUpdate } from "../types/database";
 import { StatusBadge } from "../components/StatusBadge";
 import { SortableHeader } from "../components/SortableHeader";
@@ -10,6 +12,7 @@ import Loading from "@/components/Loading";
 import axios from "axios";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 // Interfaz extendida solo para UpdatesPage
 interface ExtendedTripUpdate extends TripUpdate {
@@ -43,13 +46,15 @@ export function UpdatesPage() {
   });
   const { isLoading } = useAuth();
 
+  const [selectedValue, setSelectedValue] = useState("100");
+
   useEffect(() => {
     loadUpdates();
-  }, []);
+  }, [selectedValue]);
 
   const loadUpdates = async () => {
     try {
-      const response = await axios.get("/trip-updates");
+      const response = await axios.get(`/trip-updates?qty=${selectedValue}`);
 
       const data = await response.data.map((update: ExtendedTripUpdate) => {
         return {
@@ -105,13 +110,20 @@ export function UpdatesPage() {
           </h2>
 
           <div className="space-y-4">
-            <div className="flex gap-4">
-              <SearchInput
-                value={search}
-                onChange={setSearch}
-                placeholder="Buscar actualizaciones..."
-              />
+            <div className="flex space-x-3 w-full">
+              {/* Search Input */}
+              <div className="w-fit">
+                <SearchInput
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Buscar actualizaciones..."
+                />
+              </div>
+              {/* Filter  */}
               <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+
+              {/* Cantidad de actualizaciones */}
+              <UpdatesSelector selectedValue={selectedValue} setSelectedValue={setSelectedValue}/>
             </div>
 
             <div className="bg-white dark:bg-black rounded-lg shadow-sm overflow-x-auto relative max-h-[calc(100vh-220px)]">
@@ -240,5 +252,36 @@ export function UpdatesPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+function UpdatesSelector({ selectedValue, setSelectedValue }: {selectedValue: string, setSelectedValue: any}) {
+  const id = useId();
+  return (
+    <div className="bg-input/50 inline-flex h-9 rounded-md p-0.5">
+      <RadioGroup
+        value={selectedValue}
+        onValueChange={setSelectedValue}
+        className="group after:bg-background has-focus-visible:after:border-ring has-focus-visible:after:ring-ring/50 relative inline-grid grid-cols-[1fr_1fr_1fr_1fr] items-center gap-0 text-sm font-medium after:absolute after:inset-y-0 after:w-1/4 after:rounded-sm after:shadow-xs after:transition-[translate,box-shadow] after:duration-300 after:ease-[cubic-bezier(0.16,1,0.3,1)] has-focus-visible:after:ring-[3px] data-[state=100]:after:translate-x-0 data-[state=300]:after:translate-x-18 data-[state=600]:after:translate-x-35 data-[state=all]:after:translate-x-52"
+        data-state={selectedValue}
+      >
+        <label className="text-muted-foreground group-data-[state=100]:text-foreground relative z-10 inline-flex h-full min-w-8 cursor-pointer items-center justify-center px-4 whitespace-nowrap transition-colors select-none">
+          100
+          <RadioGroupItem id={`${id}-1`} value="100" className="sr-only" />
+        </label>
+        <label className="text-muted-foreground group-data-[state=300]:text-foreground relative z-10 inline-flex h-full min-w-8 cursor-pointer items-center justify-center px-4 whitespace-nowrap transition-colors select-none">
+          300
+          <RadioGroupItem id={`${id}-2`} value="300" className="sr-only" />
+        </label>
+        <label className="text-muted-foreground group-data-[state=600]:text-foreground relative z-10 inline-flex h-full min-w-8 cursor-pointer items-center justify-center px-4 whitespace-nowrap transition-colors select-none">
+          600
+          <RadioGroupItem id={`${id}-3`} value="600" className="sr-only" />
+        </label>
+        <label className="text-muted-foreground group-data-[state=all]:text-foreground relative z-10 inline-flex h-full min-w-8 cursor-pointer items-center justify-center px-4 whitespace-nowrap transition-colors select-none">
+          Todas
+          <RadioGroupItem id={`${id}-4`} value="all" className="sr-only" />
+        </label>
+      </RadioGroup>
+    </div>
   );
 }

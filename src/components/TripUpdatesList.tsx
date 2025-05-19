@@ -16,6 +16,7 @@ import {
   updateCategoryColors,
 } from "../constants/updateCategories";
 import { TripUpdate } from "../types/database";
+import { cn } from "@/lib/utils";
 
 const categoryIcons = {
   INICIO_RUTA: Navigation,
@@ -30,12 +31,10 @@ const categoryIcons = {
 
 interface TripUpdatesListProps {
   updates: TripUpdate[] | undefined;
+  isAlert: boolean;
 }
 
-export function TripUpdatesList({ updates }: TripUpdatesListProps) {
-  const isLocalhost = window.location.host.includes("localhost");
-  console.log("Is Localhost", isLocalhost);
-
+export function TripUpdatesList({ updates, isAlert }: TripUpdatesListProps) {
   if (!updates) {
     return (
       <div className="py-8 text-center text-gray-500">
@@ -55,29 +54,39 @@ export function TripUpdatesList({ updates }: TripUpdatesListProps) {
 
         // Construir la URL de la imagen usando el endpoint /api/images/{token}
         const imageUrl = update.image_token
-          ? isLocalhost
-            ? `http://localhost:8000/api/images/${update.image_token}`
-            : `/api/images/${update.image_token}`
+          ? `${import.meta.env.VITE_API_URL}/images/${update.image_token}`
           : null;
 
         // Detectar si es un PDF basado en image_type
         const isPDF = update.image_type === "application/pdf";
 
         return (
-          <div key={update.id} className="relative pl-16">
+          <div
+            key={update.id}
+            className={`relative pl-16 ${
+              isAlert &&
+              "bg-transparent"
+            }`}
+          >
             <div
-              className={`absolute left-[33px] -translate-x-1/2 w-3 h-3 rounded-full ${bg} border-2 border-white dark:border-black`}
+              className={`absolute left-[33px] -translate-x-1/2 w-3 h-3 rounded-full ${isAlert && "bg-alert"} ${bg} border-2 border-white dark:border-black`}
             />
 
-            <div className="bg-white dark:bg-black rounded-lg shadow-xs border p-4 space-y-3">
+            <div
+              className={cn(
+                "transition-colors duration-500 group",
+                isAlert &&
+                  "bg-transparent text-white"
+              )}
+            >
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+                <div className={`flex items-center space-x-2`}>
                   <Icon className={`h-5 w-5 ${text}`} />
                   <span className={`text-sm font-medium ${text}`}>
                     {updateCategoryLabels[update.category]}
                   </span>
                 </div>
-                <time className="text-xs text-gray-500 dark:text-gray-400">
+                <time className={`text-xs text-gray-500 dark:text-gray-400 ${isAlert && "text-white"}`}>
                   {format(new Date(update.created_at), "dd-MMM-yy H:mm", {
                     locale: es,
                   })}

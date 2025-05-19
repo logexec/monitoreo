@@ -31,6 +31,7 @@ interface ExpandableRowProps {
   onToggleSelect: (checked: boolean, event?: React.MouseEvent) => void;
   onTripSelect: (trip: Trip) => void;
   updates: TripUpdate[];
+  minutesSinceUpdate?: number;
 }
 
 export function ExpandableRow({
@@ -41,6 +42,7 @@ export function ExpandableRow({
   onToggleSelect,
   onTripSelect,
   updates,
+  minutesSinceUpdate = 0,
 }: ExpandableRowProps) {
   // Sort updates by created_at in descending order
   const sortedUpdates = [...updates].sort(
@@ -79,7 +81,17 @@ export function ExpandableRow({
 
   return (
     <>
-      <tr className="hover:bg-gray-50 dark:bg-black dark:hover:bg-gray-950">
+      <tr
+        className={cn(
+          "transition-colors duration-500 group",
+          "hover:bg-gray-50 dark:hover:bg-gray-950",
+          minutesSinceUpdate >= 15
+            ? "bg-alert bg-red-600 dark:bg-red-700 sticky top-[40px] z-20 text-white group-[.bg-alert]:text-white hover:bg-red-700 dark:hover:bg-red-600"
+            : minutesSinceUpdate >= 13
+            ? "bg-orange-500 text-black"
+            : "dark:bg-black"
+        )}
+      >
         <td className="px-2">
           <input
             type="checkbox"
@@ -123,11 +135,11 @@ export function ExpandableRow({
         </td> */}
         <td
           onClick={() => onTripSelect(trip)}
-          className="px-4 py-4 whitespace-nowrap text-sm text-black dark:text-white max-w-[10ch] font-bold cursor-pointer"
+          className="px-4 py-4 whitespace-nowrap text-sm text-inherit group-[.bg-alert]:text-white max-w-[10ch] font-bold cursor-pointer"
         >
           {trip.plate_number.slice(0, 3)}-{trip.plate_number.slice(3)}
         </td>
-        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 flex flex-col space-y-1">
+        <td className="px-4 py-4 whitespace-nowrap text-sm text-inherit group-[.bg-alert]:text-white flex flex-col space-y-1">
           <div className="flex flex-row space-x-1 text-xs">
             <span className="font-light">Entrega prevista:</span>
             <span className="font-medium">
@@ -147,7 +159,7 @@ export function ExpandableRow({
             </span>
           </div>
         </td>
-        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 min-w-[140px] capitalize">
+        <td className="px-4 py-4 whitespace-nowrap text-sm text-inherit group-[.bg-alert]:text-white min-w-[140px] capitalize">
           <div className="flex flex-col space-y-0">
             <span>{trip.driver_name.toLowerCase()}</span>
             {trip.driver_document ? (
@@ -162,7 +174,11 @@ export function ExpandableRow({
             {trip.driver_phone ? (
               <Popover>
                 <PopoverTrigger>
-                  <div className="flex flex-row space-x-1 items-center text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-red-400 hover:text-white rounded dark:hover:bg-red-700 dark:hover:text-white mt-0.5 py-0.5 px-2 cursor-pointer w-fit">
+                  <div
+                    className={`flex flex-row space-x-1 items-center text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-red-400 hover:text-white rounded dark:hover:bg-red-700 dark:hover:text-white mt-0.5 py-0.5 px-2 cursor-pointer w-fit ${
+                      minutesSinceUpdate >= 15 && "text-white"
+                    }`}
+                  >
                     <span>
                       <SmartphoneIcon size={16} />
                     </span>
@@ -265,15 +281,37 @@ export function ExpandableRow({
             )}
           </div>
         </td>
-        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+        <td className="px-4 py-4 whitespace-nowrap text-sm text-inherit group-[.bg-alert]:text-white">
           <div className="flex flex-col space-y-1">
             <div className="flex flex-row text-xs space-x-1">
               <span className="font-light">Origen:</span>
-              <span className="font-medium">{trip.origin || "—"}</span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger className="max-w-[20ch] truncate font-medium text-xs">
+                    {trip.origin || "—"}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span className="font-medium">
+                      {trip.origin || "—"}
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <div className="flex flex-row text-xs space-x-1">
               <span className="font-light">Destino:</span>
-              <span className="font-medium">{trip.destination || "—"}</span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger className="max-w-[20ch] truncate font-medium text-xs">
+                    {trip.destination || "—"}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span className="font-medium">
+                      {trip.destination || "—"}
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <div className="flex flex-row text-xs space-x-1">
               <span className="font-light">No. Viaje:</span>
@@ -286,14 +324,18 @@ export function ExpandableRow({
         <td className="pl-6">
           <TooltipProvider>
             <Tooltip delayDuration={200}>
-              <TooltipTrigger className="py-0.5 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 text-center truncate max-w-[8ch]">
+              <TooltipTrigger className="py-0.5 whitespace-nowrap text-sm text-inherit group-[.bg-alert]:text-white text-center truncate max-w-[8ch]">
                 {trip.project}
               </TooltipTrigger>
               <TooltipContent side="right">{trip.project}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm">
+        <td
+          className={`px-6 py-4 whitespace-nowrap text-sm ${
+            minutesSinceUpdate >= 15 && "group bg-alert"
+          }`}
+        >
           {latestUpdate?.category ? (
             <StatusOption
               status={trip.current_status}
@@ -354,8 +396,17 @@ export function ExpandableRow({
       </tr>
       {sortedUpdates.length > 0 && isExpanded && (
         <tr>
-          <td colSpan={11} className="px-6 py-4 bg-gray-50 dark:bg-gray-950">
-            <TripUpdatesList updates={sortedUpdates} />
+          <td
+            colSpan={11}
+            className={`px-6 py-4 bg-gray-50 dark:bg-gray-950 pr-24 ${
+              minutesSinceUpdate >= 15 &&
+              "bg-orange-500/90 dark:bg-orange-700 text-white"
+            }`}
+          >
+            <TripUpdatesList
+              updates={sortedUpdates}
+              isAlert={minutesSinceUpdate >= 15}
+            />
           </td>
         </tr>
       )}

@@ -1,13 +1,6 @@
-import React from 'react';
+import { statusColors } from '@/constants/statusMappings';
 import { TripStatus } from '../types/database';
 
-const statusColors: Record<TripStatus, { text: string }> = {
-  SCHEDULED: { text: 'text-blue-600' },
-  IN_TRANSIT: { text: 'text-yellow-600' },
-  DELAYED: { text: 'text-red-600' },
-  DELIVERED: { text: 'text-green-600' },
-  CANCELLED: { text: 'text-gray-600' }
-};
 
 interface StatusOptionProps {
   status: TripStatus;

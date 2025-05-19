@@ -1,4 +1,3 @@
-import React from 'react';
 import { UpdateCategory } from '../types/database';
 import { updateCategoryLabels, updateCategoryColors } from '../constants/updateCategories';
 

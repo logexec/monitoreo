@@ -16,35 +16,35 @@ export const updateCategoryColors: Record<
   { bg: string; text: string }
 > = {
   INICIO_RUTA: {
-    bg: "bg-green-100 dark:bg-green-900",
-    text: "text-green-800 dark:text-green-200",
+    bg: "bg-green-100 dark:bg-green-900 group-[.bg-alert]:bg-white/20",
+    text: "text-green-800 dark:text-green-200 group-[.bg-alert]:text-white",
   },
   SEGUIMIENTO: {
-    bg: "bg-blue-100 dark:bg-blue-900",
-    text: "text-blue-800 dark:text-blue-200",
+    bg: "bg-blue-100 dark:bg-blue-900 group-[.bg-alert]:bg-white/20",
+    text: "text-blue-800 dark:text-blue-200 group-[.bg-alert]:text-white",
   },
   VIAJE_CARGADO: {
-    bg: "bg-purple-100 dark:bg-purple-900",
-    text: "text-purple-800 dark:text-purple-200",
+    bg: "bg-purple-100 dark:bg-purple-900 group-[.bg-alert]:bg-white/20",
+    text: "text-purple-800 dark:text-purple-200 group-[.bg-alert]:text-white",
   },
   ACCIDENTE: {
-    bg: "bg-red-100 dark:bg-red-900",
-    text: "text-red-800 dark:text-red-200",
+    bg: "bg-[#fee2e2] dark:bg-[#7f1d1d] group-[.bg-alert]:bg-white/20",
+    text: "text-[#991b1b] dark:text-red-200 group-[.bg-alert]:text-white",
   },
   AVERIA: {
-    bg: "bg-yellow-100 dark:bg-yellow-900",
-    text: "text-yellow-800 dark:text-yellow-200",
+    bg: "bg-[#fef3c7] dark:bg-[#78350f] group-[.bg-alert]:bg-white/20",
+    text: "text-[#92400e] dark:text-yellow-200 group-[.bg-alert]:text-white",
   },
   ROBO_ASALTO: {
-    bg: "bg-pink-100 dark:bg-pink-900",
-    text: "text-pink-800 dark:text-pink-200",
+    bg: "bg-[#fce7f3] dark:bg-[#831843] group-[.bg-alert]:bg-white/20",
+    text: "text-[#9d174d] dark:text-pink-200 group-[.bg-alert]:text-white",
   },
   PERDIDA_CONTACTO: {
-    bg: "bg-gray-100 dark:bg-gray-900",
-    text: "text-gray-800 dark:text-gray-200",
+    bg: "bg-gray-100 dark:bg-gray-900 group-[.bg-alert]:bg-white/20",
+    text: "text-gray-800 dark:text-gray-200 group-[.bg-alert]:text-white",
   },
   VIAJE_FINALIZADO: {
-    bg: "bg-emerald-100 dark:bg-emerald-900",
-    text: "text-emerald-800 dark:text-emerald-200",
+    bg: "bg-emerald-100 dark:bg-emerald-900 group-[.bg-alert]:bg-white/20",
+    text: "text-emerald-800 dark:text-emerald-200 group-[.bg-alert]:text-white",
   },
 };
