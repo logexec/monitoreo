@@ -178,7 +178,7 @@ export function ExpandableRow({
                 <PopoverTrigger>
                   <div
                     className={`flex flex-row space-x-1 items-center text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-red-400 hover:text-white rounded dark:hover:bg-red-700 dark:hover:text-white mt-0.5 py-0.5 px-2 cursor-pointer w-fit ${
-                      minutesSinceUpdate >= 15 && "text-white"
+                      minutesSinceUpdate >= 20 && "text-white"
                     }`}
                   >
                     <span>
@@ -335,7 +335,7 @@ export function ExpandableRow({
         </td>
         <td
           className={`px-6 py-4 whitespace-nowrap text-sm ${
-            minutesSinceUpdate >= 15 && "group bg-alert"
+            minutesSinceUpdate >= 20 && "group bg-alert"
           }`}
         >
           {latestUpdate?.category ? (
@@ -401,13 +401,13 @@ export function ExpandableRow({
           <td
             colSpan={11}
             className={`px-6 py-4 bg-gray-50 dark:bg-gray-950 pr-24 ${
-              minutesSinceUpdate >= 15 &&
+              minutesSinceUpdate >= 20 &&
               "bg-orange-500/90 dark:bg-orange-700 text-white"
             }`}
           >
             <TripUpdatesList
               updates={sortedUpdates}
-              isAlert={minutesSinceUpdate >= 15}
+              isAlert={minutesSinceUpdate >= 20}
             />
           </td>
         </tr>
