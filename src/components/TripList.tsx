@@ -294,15 +294,6 @@ const sortedTrips = [...overdueTrips, ...recentTrips];
                 />
               </th>
               <th className="sticky top-0 bg-gray-800 z-10 w-8 px-2"></th>
-              {/* <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                <SortableHeader
-                  label="ID Viaje"
-                  field="system_trip_id"
-                  currentField={sortConfig.field}
-                  direction={sortConfig.direction}
-                  onSort={handleSort}
-                />
-              </th> */}
               <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
                 <SortableHeader
                   label="Placa"
