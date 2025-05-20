@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useId, useState, useMemo } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { 
   useReactTable, 
   getCoreRowModel, 
@@ -8,8 +8,10 @@ import {
   getFilteredRowModel,
   flexRender,
   ColumnDef,
-  FilterFn
+  FilterFn,
+  ColumnFiltersState
 } from "@tanstack/react-table";
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Search, X, ChevronUp, ChevronDown, Filter, Check } from "lucide-react";
 import { TripUpdate, UpdateCategory } from "../types/database";
 import { StatusBadge } from "../components/StatusBadge";
@@ -22,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEffect, useId, useMemo, useRef, useState, useCallback } from "react";
 
 // Interfaz extendida solo para UpdatesPage
 interface ExtendedTripUpdate extends TripUpdate {
@@ -39,8 +42,18 @@ export function UpdatesPage() {
   const [updates, setUpdates] = useState<ExtendedTripUpdate[]>([]);
   const [search, setSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<UpdateCategory[]>([]);
-  // const [statusFilter, setStatusFilter] = useState("all");
-
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  
+  // Actualizar columnFilters cuando cambia selectedStatus
+  useEffect(() => {
+    // Establecer filtros de columna de forma independiente para evitar re-renderizados innecesarios
+    if (selectedStatus.length > 0) {
+      setColumnFilters([{ id: 'category', value: selectedStatus }]);
+    } else {
+      setColumnFilters([]);
+    }
+  }, [selectedStatus]);
+  
   // Lista de estados disponibles con valores correctos según el tipo UpdateCategory
   const statusOptions: { value: UpdateCategory; label: string }[] = [
     { value: "INICIO_RUTA" as UpdateCategory, label: "Inicio de Ruta" },
@@ -52,29 +65,41 @@ export function UpdatesPage() {
     { value: "PERDIDA_CONTACTO" as UpdateCategory, label: "Pérdida de Contacto" },
     { value: "VIAJE_FINALIZADO" as UpdateCategory, label: "Finalizado" },
   ];
+  
   const [sorting, setSorting] = useState<any[]>([
     { id: 'created_at', desc: true } // Ordenamiento inicial por fecha (más reciente primero)
   ]);
   const { isLoading: authLoading } = useAuth();
   const [dataLoading, setDataLoading] = useState(true);
   const [selectedValue, setSelectedValue] = useState("100");
+  
+  // Referencias para virtualización
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  // Formatear fecha para mostrar
+  // Formatear fecha - función simple sin memoización
   const formatDate = (dateStr: string): string => {
     if (!dateStr) return "—";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('es-EC', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('es-EC', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return "—";
+    }
   };
 
-  // Formatear hora para mostrar
+  // Formatear hora - función simple sin memoización
   const formatTime = (dateStr: string): string => {
     if (!dateStr) return "—";
-    const date = new Date(dateStr);
-    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+    try {
+      const date = new Date(dateStr);
+      return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+    } catch (e) {
+      return "—";
+    }
   };
 
   // Cargar actualizaciones
@@ -108,65 +133,61 @@ export function UpdatesPage() {
     }
   };
 
-  // Función de filtro global personalizada
-  const globalFilterFn: FilterFn<ExtendedTripUpdate> = (row, _, filterValue) => {
+  // Función de filtro global simplificada y optimizada
+  const globalFilterFn: FilterFn<ExtendedTripUpdate> = useCallback((row, _, filterValue) => {
     if (!filterValue || filterValue === "") return true;
     
     const normalizedFilterValue = filterValue.toLowerCase();
     
     // Convertir todo el objeto a un texto de búsqueda
     const update = row.original;
+    // Limitar los campos para mejor rendimiento
     const searchText = [
-      // Datos principales
       update.trip?.trip_id || "",
       update.trip?.plate_number || "",
       update.trip?.project || "",
       update.trip?.driver_name || "",
-      update.trip?.driver_phone || "",
       update.category || "",
       update.notes || "",
-      update.user?.name || "",
-      formatDate(update.created_at || ""),
-      formatTime(update.created_at || ""),
     ].join(" ").toLowerCase();
     
     return searchText.includes(normalizedFilterValue);
-  };
+  }, []);
 
-  // Definición de columnas
+  // Memoizamos las columnas para evitar recreaciones
   const columns = useMemo<ColumnDef<ExtendedTripUpdate>[]>(() => [
-    // Placa
+    // Placa - columna optimizada
     {
       id: 'plate_number',
       header: 'Placa',
       accessorFn: (row) => row.trip?.plate_number || "—",
       enableSorting: true,
       sortingFn: 'alphanumeric',
-      cell: ({ row }) => {
-        const update = row.original;
+      cell: ({ getValue }) => {
+        const value = getValue() as string;
         return (
-          <div className="px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white font-medium">
-            {update.trip?.plate_number || "—"}
+          <div className="whitespace-nowrap text-sm font-medium text-black dark:text-white">
+            {value}
           </div>
         );
       },
     },
-    // Proyecto
+    // Proyecto - columna optimizada
     {
       id: 'project',
       header: 'Proyecto',
       accessorFn: (row) => row.trip?.project || "—",
       enableSorting: true,
-      cell: ({ row }) => {
-        const update = row.original;
+      cell: ({ getValue }) => {
+        const value = getValue() as string;
         return (
-          <div className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-            {update.trip?.project || "—"}
+          <div className="whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+            {value}
           </div>
         );
       },
     },
-    // Conductor
+    // Conductor - columna optimizada
     {
       id: 'driver_name',
       header: 'Conductor',
@@ -175,7 +196,7 @@ export function UpdatesPage() {
       cell: ({ row }) => {
         const update = row.original;
         return (
-          <div className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+          <div className="whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
             <div className="flex flex-row space-x-1">
               <span className="font-light">Chofer:</span>
               <span className="font-medium">
@@ -192,7 +213,7 @@ export function UpdatesPage() {
         );
       },
     },
-    // Estado
+    // Estado - columna optimizada
     {
       id: 'category',
       header: 'Estado',
@@ -201,28 +222,28 @@ export function UpdatesPage() {
       cell: ({ row }) => {
         const update = row.original;
         return (
-          <div className="px-6 py-4 whitespace-nowrap text-sm">
+          <div className="whitespace-nowrap text-sm">
             <StatusBadge category={update.category} />
           </div>
         );
       },
     },
-    // Notas
+    // Notas - columna optimizada
     {
       id: 'notes',
       header: 'Notas',
-      accessorFn: (row) => row.notes,
+      accessorFn: (row) => row.notes || "",
       enableSorting: true,
       cell: ({ row }) => {
         const update = row.original;
         return (
-          <div className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-md">
-            <div className="line-clamp-2">{update.notes}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
+            <div className="line-clamp-2">{update.notes || ""}</div>
           </div>
         );
       },
     },
-    // Reportado por
+    // Reportado por - columna optimizada
     {
       id: 'updated_by',
       header: 'Reportado por',
@@ -231,13 +252,13 @@ export function UpdatesPage() {
       cell: ({ row }) => {
         const update = row.original;
         return (
-          <div className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-md">
+          <div className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
             <div className="line-clamp-2">{update.user?.name || "—"}</div>
           </div>
         );
       },
     },
-    // Fecha
+    // Fecha - columna optimizada
     {
       id: 'created_at',
       header: 'Fecha',
@@ -246,50 +267,81 @@ export function UpdatesPage() {
       sortingFn: 'datetime',
       cell: ({ row }) => {
         const update = row.original;
+        const date = formatDate(update.created_at);
+        const time = formatTime(update.created_at);
         return (
-          <div className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 capitalize flex flex-col space-y-0">
-            <span>
-              {formatDate(update.created_at)}
-            </span>
-            <span>
-              {formatTime(update.created_at)}
-            </span>
+          <div className="whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 capitalize flex flex-col space-y-0">
+            <span>{date}</span>
+            <span>{time}</span>
           </div>
         );
       },
     },
   ], []);
 
-  // Configurar TanStack Table
+  // Manejador de cambio de estado optimizado
+  const handleStatusChange = useCallback((newSelectedStatus: UpdateCategory[]) => {
+    // Usamos un callback para actualizar el estado para evitar cierres de contexto
+    requestAnimationFrame(() => {
+      setSelectedStatus(newSelectedStatus);
+    });
+  }, []);
+
+  // Manejador de cambio de búsqueda optimizado
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    // Usar requestAnimationFrame para las actualizaciones de UI
+    const value = e.target.value;
+    requestAnimationFrame(() => {
+      setSearch(value);
+    });
+  }, []);
+
+  // Configurar TanStack Table optimizado para datos locales
   const table = useReactTable({
     data: updates,
     columns,
     state: {
       globalFilter: search,
       sorting: sorting,
-      columnFilters: selectedStatus.length > 0 ? [
-        {
-          id: 'category',
-          value: selectedStatus,
-        },
-      ] : [],
+      columnFilters: columnFilters,
     },
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     globalFilterFn,
+    // Opciones de rendimiento
+    enableRowSelection: false, // Desactivar si no lo necesitas
+    debugTable: false,        // Desactivar en producción
+    debugHeaders: false,
+    debugColumns: false,
     filterFns: {
-      // Función de filtro personalizada para categorías múltiples
       multiSelect: (row, columnId, filterValue) => {
         const value = row.getValue(columnId) as string;
         return filterValue.includes(value);
       },
-    },
+    }
   });
 
-  // Calcular filas filtradas y ordenadas
-  const filteredRows = table.getFilteredRowModel().rows;
+  // Obtener filas filtradas
+  const { rows } = table.getFilteredRowModel();
+
+  // Configuración para virtualización
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 60, // Altura aproximada de cada fila en píxeles
+    overscan: 10, // Número de filas adicionales a renderizar
+  });
+
+  // Obtener datos de virtualización
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
+  const paddingBottom = virtualRows.length > 0 
+    ? totalSize - virtualRows[virtualRows.length - 1].end 
+    : 0;
 
   if (authLoading || dataLoading) {
     return <Loading text="Cargando..." />;
@@ -298,7 +350,7 @@ export function UpdatesPage() {
   return (
     <main className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-2">
       {/* Estilos para scrollbar personalizado */}
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{ __html: `
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
           height: 8px;
@@ -325,7 +377,7 @@ export function UpdatesPage() {
             background: #777;
           }
         }
-      `}} />
+      ` }} />
       
       <div className="space-y-8">
         <section>
@@ -344,7 +396,7 @@ export function UpdatesPage() {
                     placeholder="Buscar actualizaciones..."
                     className="pl-10 pr-10 py-2 w-full border rounded-lg dark:bg-black/40 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-all"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={handleSearchChange}
                   />
                   {search && (
                     <button
@@ -357,20 +409,27 @@ export function UpdatesPage() {
                 </div>
               </div>
 
-              {/* Filtro por estado mejorado con popover y multiselect */}
+              {/* Filtro por estado con popover y multiselect */}
               <StatusFilterPopover 
                 options={statusOptions} 
                 selected={selectedStatus} 
-                onChange={setSelectedStatus} 
+                onChange={handleStatusChange} 
               />
 
               {/* Cantidad de actualizaciones */}
-              <UpdatesSelector selectedValue={selectedValue} setSelectedValue={setSelectedValue} />
+              <UpdatesSelector 
+                selectedValue={selectedValue} 
+                setSelectedValue={setSelectedValue} 
+              />
             </div>
 
-            <div className="bg-white dark:bg-black/60 rounded-lg shadow-sm overflow-x-auto relative max-h-[calc(100vh-220px)] custom-scrollbar">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                <thead className="bg-gray-800/95 backdrop-blur-sm sticky top-0">
+            {/* Tabla con virtualización */}
+            <div 
+              ref={tableContainerRef}
+              className="bg-white dark:bg-black/60 rounded-lg shadow-sm overflow-x-auto overflow-y-auto relative h-[calc(100vh-220px)] custom-scrollbar"
+            >
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800 table-fixed">
+                <thead className="bg-gray-800/95 backdrop-blur-sm sticky top-0 z-10">
                   <tr>
                     {table.getFlatHeaders().map(header => (
                       <th 
@@ -378,6 +437,7 @@ export function UpdatesPage() {
                         className={`sticky top-0 bg-gray-800/95 backdrop-blur-sm z-10 px-6 py-3 text-left ${
                           header.column.getCanSort() ? 'cursor-pointer hover:bg-gray-700/90' : ''
                         }`}
+                        style={{ width: header.id === 'notes' ? '25%' : 'auto' }}
                       >
                         <div 
                           className="flex items-center text-sm font-medium text-gray-100"
@@ -405,23 +465,42 @@ export function UpdatesPage() {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-800 dark:bg-transparent">
-                  {filteredRows.length > 0 ? (
-                    filteredRows.map(row => (
-                      <tr 
-                        key={row.original.id}
-                        className="transition-colors duration-300 hover:bg-gray-50 dark:hover:bg-gray-900/40"
-                      >
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    ))
+                <tbody 
+                  className="bg-white divide-y divide-gray-200 dark:divide-gray-800 dark:bg-transparent"
+                >
+                  {rows.length > 0 ? (
+                    <>
+                      {paddingTop > 0 && (
+                        <tr>
+                          <td style={{ height: `${paddingTop}px` }} colSpan={columns.length} />
+                        </tr>
+                      )}
+                      
+                      {virtualRows.map(virtualRow => {
+                        const row = rows[virtualRow.index];
+                        return (
+                          <tr 
+                            key={row.original.id}
+                            className="transition-colors duration-300 hover:bg-gray-50 dark:hover:bg-gray-900/40"
+                          >
+                            {row.getVisibleCells().map(cell => (
+                              <td key={cell.id} className="px-6 py-4">
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                      
+                      {paddingBottom > 0 && (
+                        <tr>
+                          <td style={{ height: `${paddingBottom}px` }} colSpan={columns.length} />
+                        </tr>
+                      )}
+                    </>
                   ) : (
                     <tr>
                       <td
@@ -445,11 +524,19 @@ export function UpdatesPage() {
 // Componente de selección de cantidad de actualizaciones
 function UpdatesSelector({ selectedValue, setSelectedValue }: {selectedValue: string, setSelectedValue: any}) {
   const id = useId();
+  
+  // Manejador optimizado para cambios de valor
+  const handleValueChange = useCallback((value: string) => {
+    requestAnimationFrame(() => {
+      setSelectedValue(value);
+    });
+  }, [setSelectedValue]);
+  
   return (
     <div className="bg-input/50 inline-flex h-9 rounded-md p-0.5">
       <RadioGroup
         value={selectedValue}
-        onValueChange={setSelectedValue}
+        onValueChange={handleValueChange}
         className="group after:bg-background has-focus-visible:after:border-ring has-focus-visible:after:ring-ring/50 relative inline-grid grid-cols-[1fr_1fr_1fr_1fr] items-center gap-0 text-sm font-medium after:absolute after:inset-y-0 after:w-1/4 after:rounded-sm after:shadow-xs after:transition-[translate,box-shadow] after:duration-300 after:ease-[cubic-bezier(0.16,1,0.3,1)] has-focus-visible:after:ring-[3px] data-[state=100]:after:translate-x-0 data-[state=300]:after:translate-x-18 data-[state=600]:after:translate-x-35 data-[state=all]:after:translate-x-52"
         data-state={selectedValue}
       >
@@ -474,7 +561,7 @@ function UpdatesSelector({ selectedValue, setSelectedValue }: {selectedValue: st
   );
 }
 
-// Componente de filtro por estado con popover y multiselect
+// Componente de filtro por estado con popover y multiselect optimizado
 function StatusFilterPopover({ 
   options, 
   selected, 
@@ -484,21 +571,22 @@ function StatusFilterPopover({
   selected: UpdateCategory[]; 
   onChange: (value: UpdateCategory[]) => void; 
 }) {
-  const toggleOption = (value: UpdateCategory) => {
+  // Manejadores optimizados
+  const toggleOption = useCallback((value: UpdateCategory) => {
     if (selected.includes(value)) {
       onChange(selected.filter(item => item !== value));
     } else {
       onChange([...selected, value]);
     }
-  };
+  }, [selected, onChange]);
 
-  const clearOptions = () => {
+  const clearOptions = useCallback(() => {
     onChange([]);
-  };
+  }, [onChange]);
 
-  const selectAllOptions = () => {
+  const selectAllOptions = useCallback(() => {
     onChange(options.map(option => option.value));
-  };
+  }, [options, onChange]);
 
   return (
     <Popover>
@@ -520,11 +608,11 @@ function StatusFilterPopover({
             <CommandEmpty>No se encontraron resultados.</CommandEmpty>
             <CommandGroup>
               <ScrollArea className="h-[200px]">
-                <CommandItem onSelect={() => clearOptions()} className="justify-between font-normal">
+                <CommandItem onSelect={clearOptions} className="justify-between font-normal">
                   <span>Limpiar filtros</span>
                   {selected.length === 0 && <Check className="h-4 w-4" />}
                 </CommandItem>
-                <CommandItem onSelect={() => selectAllOptions()} className="justify-between font-normal">
+                <CommandItem onSelect={selectAllOptions} className="justify-between font-normal">
                   <span>Seleccionar todos</span>
                   {selected.length === options.length && <Check className="h-4 w-4" />}
                 </CommandItem>
@@ -536,7 +624,6 @@ function StatusFilterPopover({
                       className="justify-between"
                     >
                       <div className="flex items-center">
-                        <StatusBadge category={option.value} />
                         <span className="ml-2">{option.label}</span>
                       </div>
                       {selected.includes(option.value) && <Check className="h-4 w-4" />}
