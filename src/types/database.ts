@@ -76,6 +76,14 @@ export interface TripPersonnel {
   updated_at: string;
 }
 
+export const statusLabels: Record<TripStatus, string> = {
+  SCHEDULED: 'Programado',
+  IN_TRANSIT: 'En Tránsito',
+  DELAYED: 'Retrasado',
+  DELIVERED: 'Entregado',
+  CANCELLED: 'Cancelado',
+};
+
 export interface TripCosts {
   id: string;
   trip_id: string;

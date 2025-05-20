@@ -21,7 +21,12 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Trip, TripUpdate } from "../types/database";
+import {
+  Trip,
+  TripStatus,
+  TripUpdate,
+  UpdateCategory,
+} from "../types/database";
 import { TripUpdatePanel } from "./TripUpdatePanel";
 import { StatusFilter } from "./StatusFilter";
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
@@ -144,7 +149,11 @@ export function TripList() {
         setTrips(
           response.map((trip: Trip) => ({
             ...trip,
-            updates: trip.updates ?? [],
+            updates: (trip.updates ?? []).sort(
+              (a, b) =>
+                new Date(b.created_at).getTime() -
+                new Date(a.created_at).getTime()
+            ),
             gps_devices: trip.gps_devices ?? [],
           }))
         );
@@ -159,10 +168,25 @@ export function TripList() {
         setIsLoading(false);
       }
     };
-
     fetchTrips();
   }, [selectedValue]);
 
+  const mapCategoryToStatus = (category: UpdateCategory): TripStatus => {
+    switch (category) {
+      case "INICIO_RUTA":
+      case "SEGUIMIENTO":
+        return "IN_TRANSIT";
+      case "VIAJE_FINALIZADO":
+        return "DELIVERED";
+      case "ACCIDENTE":
+      case "AVERIA":
+      case "ROBO_ASALTO":
+      case "PERDIDA_CONTACTO":
+        return "DELAYED";
+      default:
+        return "SCHEDULED";
+    }
+  };
   // Manejar creación de actualizaciones
   const handleUpdateCreated = (newUpdate: TripUpdate) => {
     setTrips((prevTrips) =>
@@ -172,7 +196,19 @@ export function TripList() {
               ...trip,
               updates: trip.updates?.some((u) => u.id === newUpdate.id)
                 ? trip.updates
-                : [newUpdate, ...(trip.updates || [])],
+                : [
+                    {
+                      ...newUpdate,
+                      created_at:
+                        newUpdate.created_at || new Date().toISOString(),
+                    },
+                    ...(trip.updates || []),
+                  ].sort(
+                    (a, b) =>
+                      new Date(b.created_at).getTime() -
+                      new Date(a.created_at).getTime()
+                  ),
+              current_status: mapCategoryToStatus(newUpdate.category),
             }
           : trip
       )
@@ -219,7 +255,7 @@ export function TripList() {
   // Enriquecer datos con cálculos de tiempo
   const enrichedTrips = useMemo(() => {
     return trips.map((trip) => {
-      const lastUpdate = trip.updates?.[0]?.created_at || trip.updated_at;
+      const lastUpdate = trip.updates?.[0]?.created_at;
       const updatedTime = lastUpdate ? new Date(lastUpdate).getTime() : now;
       const diffSeconds = Math.floor((now - updatedTime) / 1000);
       return {
@@ -279,7 +315,7 @@ export function TripList() {
         header: "Placa",
         accessorFn: (row) => row.plate_number,
         enableSorting: true,
-        sortingFn: 'alphanumeric',
+        sortingFn: "alphanumeric",
         cell: ({ row }) => {
           const trip = row.original;
           const plate = trip.plate_number;
@@ -421,11 +457,9 @@ export function TripList() {
         enableSorting: true,
         cell: ({ row }) => {
           const trip = row.original;
-          const latestUpdate = trip.updates?.[0];
-
           return (
             <div className="px-6 py-4 whitespace-nowrap text-sm">
-              {latestUpdate?.category ? (
+              {trip.current_status ? (
                 <StatusOption
                   status={trip.current_status}
                   label={statusLabels[trip.current_status]}
@@ -519,62 +553,66 @@ export function TripList() {
       },
       // Tiempo
       {
-      id: 'last_update',
-      header: 'Tiempo',
-      enableSorting: true,
-      accessorFn: (row) => {
-        // Utilizar un accessor específico para manejar el ordenamiento de tiempo
-        return row.secondsSinceUpdate || 0;
+        id: "last_update",
+        header: "Tiempo",
+        enableSorting: true,
+        accessorFn: (row) => {
+          // Utilizar un accessor específico para manejar el ordenamiento de tiempo
+          return row.secondsSinceUpdate || 0;
+        },
+        sortingFn: "basic", // Usar la función de ordenamiento básica para números
+        cell: ({ row }) => {
+          const trip = row.original as Trip & {
+            secondsSinceUpdate?: number;
+            minutesSinceUpdate?: number;
+          };
+
+          // Format elapsed time
+          const formatElapsedTime = (seconds: number): string => {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            const pad = (n: number) => String(n).padStart(2, "0");
+            return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+          };
+
+          // Determine class based on elapsed time
+          const getTimeClass = () => {
+            const minutes = trip.minutesSinceUpdate || 0;
+            if (minutes >= 20) {
+              return "text-red-700 font-bold"; // Critical alert
+            } else if (minutes >= 13 && minutes < 20) {
+              return "text-amber-600 font-semibold"; // Warning
+            }
+            return "text-gray-900 dark:text-gray-100"; // Normal
+          };
+
+          const lastUpdate = trip.updates?.[0]?.created_at;
+          const secondsElapsed = trip.secondsSinceUpdate || 0;
+
+          return (
+            <div className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px]">
+              <span
+                className={`${
+                  lastUpdate
+                    ? getTimeClass() + " group-[.bg-alert]:text-white"
+                    : "text-gray-400 dark:text-gray-600"
+                }`}
+                data-minutes={trip.minutesSinceUpdate}
+                data-seconds={secondsElapsed}
+                title={`Última actualización: ${formatDate(
+                  trip.updates?.[0]?.created_at
+                )}`}
+              >
+                {lastUpdate ? formatElapsedTime(secondsElapsed) : "—"}
+              </span>
+            </div>
+          );
+        },
       },
-      sortingFn: 'basic', // Usar la función de ordenamiento básica para números
-      cell: ({ row }) => {
-        const trip = row.original as Trip & { 
-          secondsSinceUpdate?: number;
-          minutesSinceUpdate?: number;
-        };
-        
-        // Format elapsed time
-        const formatElapsedTime = (seconds: number): string => {
-          const hrs = Math.floor(seconds / 3600);
-          const mins = Math.floor((seconds % 3600) / 60);
-          const secs = seconds % 60;
-          const pad = (n: number) => String(n).padStart(2, "0");
-          return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
-        };
-        
-        // Determine class based on elapsed time
-        const getTimeClass = () => {
-          const minutes = trip.minutesSinceUpdate || 0;
-          if (minutes >= 20) {
-            return "text-white font-bold"; // Critical alert
-          } else if (minutes >= 13) {
-            return "text-black font-semibold"; // Warning
-          }
-          return "text-gray-900 dark:text-gray-100"; // Normal
-        };
-        
-        const lastUpdate = trip.updates?.[0]?.created_at;
-        const secondsElapsed = trip.secondsSinceUpdate || 0;
-        
-        return (
-          <div className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px]">
-            <span
-              className={`${
-                lastUpdate
-                  ? getTimeClass() + " group-[.bg-alert]:text-white"
-                  : "text-gray-400 dark:text-gray-600"
-              }`}
-              data-minutes={trip.minutesSinceUpdate}
-              data-seconds={secondsElapsed}
-              title={`Última actualización: ${formatDate(trip.updates?.[0]?.created_at)}`}
-            >
-              {lastUpdate ? formatElapsedTime(secondsElapsed) : "—"}
-            </span>
-          </div>
-        );
-      },
-    },
-  ], [expandedTrips, toggleExpanded, now]);
+    ],
+    [expandedTrips, toggleExpanded, now]
+  );
 
   // Configurar TanStack Table con estado de ordenamiento
   const [sorting, setSorting] = useState<any[]>([
@@ -594,23 +632,18 @@ export function TripList() {
     },
     enableSorting: true, // Habilitar ordenamiento a nivel de tabla
     enableRowSelection: true,
+    getRowId: (row) => row.id,
     onRowSelectionChange: (updater) => {
-      const newSelection =
+      const rowSelection =
         typeof updater === "function"
-          ? updater(
-              Object.fromEntries(
-                Array.from(selectedTrips).map((id) => [id, true])
-              )
-            )
+          ? updater(table.getState().rowSelection)
           : updater;
 
-      setSelectedTrips(
-        new Set(
-          Object.entries(newSelection)
-            .filter(([_, selected]) => selected)
-            .map(([id]) => id)
-        )
-      );
+      const selectedIds = Object.entries(rowSelection)
+        .filter(([_, selected]) => selected)
+        .map(([id]) => id);
+
+      setSelectedTrips(new Set(selectedIds));
     },
     onSortingChange: setSorting, // Manejar cambios de ordenamiento
     getCoreRowModel: getCoreRowModel(),
@@ -684,15 +717,11 @@ export function TripList() {
     const minutes = trip.minutesSinceUpdate || 0;
 
     if (minutes >= 20) {
-      return "bg-alert bg-linear-to-r from-red-700 to-orange-400 via-amber-500 sticky top-[40px] z-20 text-white group-[.bg-alert]:text-white hover:bg-red-700 dark:hover:bg-red-600";
+      return "sticky top-[40px] z-20 border-x-[5px] border-rose-600 border-y-0 !rounded-full";
     }
-    if (minutes >= 13) {
-      return "bg-orange-500 text-black";
+    if (minutes >= 13 && minutes < 20) {
+      return "border-x-[5px] border-amber-600 border-y-0 !rounded-full";
     }
-    if (minutes < 13) {
-      return "bg-white text-black";
-    }
-    return "dark:bg-black";
   };
 
   return (
@@ -733,13 +762,13 @@ export function TripList() {
             Eliminar ({selectedTrips.size})
           </button>
         )}
-        <div className="relative">
+        {/* <div className="relative">
           <ProjectMultiSelect
             options={projectOptions}
             selected={filters.projects}
             onChange={(arr) => setFilters((f) => ({ ...f, projects: arr }))}
           />
-        </div>
+        </div> */}
         <StatusFilter
           value={status}
           onChange={(v) => setFilters((f) => ({ ...f, status: v }))}
@@ -788,7 +817,7 @@ export function TripList() {
                 return (
                   <React.Fragment key={row.id}>
                     <tr
-                      className={`transition-colors duration-500 group hover:bg-gray-50 dark:hover:bg-gray-950 ${getRowClassName(
+                      className={`transition-colors duration-500 bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-950 ${getRowClassName(
                         row
                       )}`}
                     >
@@ -923,13 +952,17 @@ export function TripList() {
       />
 
       {/* Trip Update Panel */}
-      {selectedTrip && (
+      {selectedTrips.size > 0 && (
         <TripUpdatePanel
-          trip={
-            selectedTrips.size > 0
-              ? trips.filter((t) => selectedTrips.has(t.id))
-              : selectedTrip
-          }
+          trip={trips.filter((t) => selectedTrips.has(t.id))}
+          onClose={() => setSelectedTrips(new Set())}
+          onUpdateCreated={handleUpdateCreated}
+        />
+      )}
+
+      {selectedTrips.size === 0 && selectedTrip && (
+        <TripUpdatePanel
+          trip={selectedTrip}
           onClose={() => setSelectedTrip(null)}
           onUpdateCreated={handleUpdateCreated}
         />
