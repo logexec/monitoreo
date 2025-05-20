@@ -184,17 +184,50 @@ export function TripList() {
   const normalizedSearch = search.trim().toLowerCase();
 
   const filteredTrips = trips.filter((trip) => {
-    const matchesSearch =
-      trip.system_trip_id.toLowerCase().includes(normalizedSearch) ||
-      (trip.external_trip_id?.toLowerCase() || "").includes(normalizedSearch) ||
-      trip.driver_name.toLowerCase().includes(normalizedSearch) ||
-      trip.driver_document?.includes(normalizedSearch) ||
-      trip.destination.toLowerCase().includes(normalizedSearch) ||
-      trip.delivery_date.includes(normalizedSearch) ||
-      trip.driver_phone?.includes(normalizedSearch) ||
-      trip.plate_number.toLowerCase().includes(normalizedSearch) ||
-      trip.current_status_update.toLowerCase().includes(normalizedSearch) ||
-      trip.project.toLowerCase().includes(normalizedSearch);
+    // Si no hay texto de búsqueda, devolvemos true para este filtro
+    if (!normalizedSearch) {
+      return true;
+    }
+
+    // Búsqueda en todos los campos relevantes
+    const matchesSearch = [
+      // Campos directos del viaje
+      trip.system_trip_id?.toLowerCase(),
+      trip.external_trip_id?.toLowerCase(),
+      trip.driver_name?.toLowerCase(),
+      trip.driver_document,
+      trip.origin?.toLowerCase(),
+      trip.destination?.toLowerCase(),
+      trip.delivery_date,
+      trip.driver_phone,
+      trip.plate_number?.toLowerCase(),
+      trip.current_status_update?.toLowerCase(),
+      trip.project?.toLowerCase(),
+      
+      // Búsqueda en campos de fecha formateados
+      new Date(trip.delivery_date).toLocaleDateString('es-EC'),
+      new Date(trip.created_at).toLocaleDateString('es-EC'),
+      new Date(trip.updated_at).toLocaleDateString('es-EC'),
+      
+      // Búsqueda en actualizaciones
+      ...(trip.updates?.map(update => 
+        [
+          update.status?.toLowerCase(),
+          update.description?.toLowerCase(),
+          update.category?.toLowerCase(),
+          new Date(update.created_at).toLocaleDateString('es-EC')
+        ]
+      )?.flat() || []),
+      
+      // Búsqueda en dispositivos GPS
+      ...(trip.gps_devices?.map(device => 
+        [
+          device.gps_provider?.toLowerCase(),
+          device.user?.toLowerCase()
+        ]
+      )?.flat() || [])
+      
+    ].some(field => field && field.includes(normalizedSearch));
 
     const matchesStatus =
       filters.status === "all" ||

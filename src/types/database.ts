@@ -52,6 +52,8 @@ export interface TripUpdate {
   id: string;
   trip_id: string;
   category: UpdateCategory;
+  status?: string;
+  description?: string;
   notes: string;
   image_token?: string | null;
   image_type?: string | null;
