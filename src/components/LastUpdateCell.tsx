@@ -26,21 +26,36 @@ export function LastUpdateCell({ updates }: LastUpdateCellProps) {
   useEffect(() => {
     if (!lastUpdate) return;
 
+    // Set initial value on updates prop change
+    setElapsed(Math.floor((Date.now() - new Date(lastUpdate).getTime()) / 1000));
+
     const interval = setInterval(() => {
       setElapsed((prev) => prev + 1);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [lastUpdate]);
+  }, [lastUpdate]); // Re-initialize when lastUpdate changes
+
+  // Define classes based on elapsed time
+  const getTimeClass = () => {
+    const minutes = Math.floor(elapsed / 60);
+    if (minutes >= 20) {
+      return "text-white font-bold"; // Critical alert
+    } else if (minutes >= 13) {
+      return "text-black font-semibold"; // Warning
+    }
+    return "text-gray-900 dark:text-gray-100"; // Normal
+  };
 
   return (
     <div className="min-w-[140px] truncate">
       <span
         className={`${
           lastUpdate
-            ? "text-gray-900 dark:text-gray-100 group-[.bg-alert]:text-white"
+            ? getTimeClass() + " group-[.bg-alert]:text-white"
             : "text-gray-400 dark:text-gray-600"
         }`}
+        data-minutes={Math.floor(elapsed / 60)} // Add data attribute for debugging
       >
         {lastUpdate ? formatElapsedTime(elapsed) : "—"}
       </span>

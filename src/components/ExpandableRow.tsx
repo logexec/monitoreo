@@ -404,7 +404,7 @@ export function ExpandableRow({
             colSpan={11}
             className={`px-6 py-4 bg-gray-50 dark:bg-gray-950 pr-24 ${
               minutesSinceUpdate >= 20 &&
-              "bg-yellow-600 dark:bg-orange-700 text-white"
+              "bg-amber-600 dark:bg-orange-700 text-white"
             }`}
           >
             <TripUpdatesList

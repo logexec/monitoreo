@@ -27,8 +27,8 @@ export function TripList() {
     null
   );
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    field: null,
-    direction: "asc",
+    field: "last_update", // Default sort by last update time
+    direction: "desc",    // Default sort direction newest first
   });
 
   const { filters, setFilters } = useGlobalFilters();
@@ -206,6 +206,7 @@ export function TripList() {
     return matchesSearch && matchesStatus && matchesProject;
   });
 
+  // Enrich trips with time calculations
   const enrichedTrips = filteredTrips.map((trip) => {
     const lastUpdate = trip.updates?.[0]?.created_at || trip.updated_at;
     const updatedTime = new Date(lastUpdate).getTime();
@@ -213,29 +214,77 @@ export function TripList() {
     return {
       ...trip,
       secondsSinceUpdate: diffSeconds,
-      minutesSinceUpdate: diffSeconds / 60,
+      minutesSinceUpdate: Math.floor(diffSeconds / 60),
+      lastUpdateTimestamp: updatedTime,
     };
   });
-  const overdueTrips = enrichedTrips
-  .filter((t) => t.secondsSinceUpdate >= 1200) // 20 minutos
-  .sort((a, b) => b.secondsSinceUpdate - a.secondsSinceUpdate);
 
-const recentTrips = enrichedTrips
-  .filter((t) => t.secondsSinceUpdate < 1200)
-  .sort((a, b) => b.secondsSinceUpdate - a.secondsSinceUpdate);
+  // Apply user-selected sorting
+  const sortedTrips = [...enrichedTrips].sort((a, b) => {
+    if (!sortConfig.field) return 0;
 
-const sortedTrips = [...overdueTrips, ...recentTrips];
+    // Implement priority sorting - critical alerts always first
+    if (a.minutesSinceUpdate >= 20 && b.minutesSinceUpdate < 20) return -1;
+    if (a.minutesSinceUpdate < 20 && b.minutesSinceUpdate >= 20) return 1;
 
+    // Handle the specific field sorting
+    let result = 0;
+    switch (sortConfig.field) {
+      case "last_update":
+        // For time since last update, we sort by the timestamp
+        result = a.lastUpdateTimestamp - b.lastUpdateTimestamp;
+        break;
+      case "plate_number":
+        result = a.plate_number.localeCompare(b.plate_number);
+        break;
+      case "delivery_date":
+        result = new Date(a.delivery_date).getTime() - new Date(b.delivery_date).getTime();
+        break;
+      case "driver_name":
+        result = a.driver_name.localeCompare(b.driver_name);
+        break;
+      case "project":
+        result = a.project.localeCompare(b.project);
+        break;
+      case "status_category": {
+        const statusA = a.updates?.[0]?.category ? a.updates[0].category : "";
+        const statusB = b.updates?.[0]?.category ? b.updates[0].category : "";
+        result = statusA.localeCompare(statusB);
+        break;
+      }
+      case "current_status_update": {
+        result = a.current_status_update.localeCompare(b.current_status_update);
+        break;
+      }
+      case "gps_provider": {
+        const providerA = a.gps_devices?.[0]?.gps_provider ? a.gps_devices[0].gps_provider : "";
+        const providerB = b.gps_devices?.[0]?.gps_provider ? b.gps_devices[0].gps_provider : "";
+        result = providerA.localeCompare(providerB);
+        break;
+      }
+      default: {
+        // For any other field
+        const valueA = a[sortConfig.field as keyof typeof a];
+        const valueB = b[sortConfig.field as keyof typeof b];
+        if (typeof valueA === "string" && typeof valueB === "string") {
+          result = valueA.localeCompare(valueB);
+        } else if (typeof valueA === "number" && typeof valueB === "number") {
+          result = valueA - valueB;
+        }
+        break;
+      }
+    }
+
+    // Apply the sort direction
+    return sortConfig.direction === "asc" ? result : -result;
+  });
 
   if (isLoading) {
     return <Loading text="Cargando viajes..." fullScreen />;
   }
 
-  // const uniqueProjects = [...new Set(trips.map((trip) => trip.project))].sort();
-
   return (
     <div className="space-y-4 py-5 px-2 mx-auto">
-      {/* <div className="space-y-4 p-5 max-w-[1700px] screen-xl:max-w-[1280px] screen-2xl:max-w-[1536px] screen-3xl:max-w-[1600px] screen-4xl:max-w-[1800px] screen-5xl:max-w-[2000px] screen-6xl:max-w-[2200px] mx-auto"> */}
       {/* Filter Section */}
       <div className="flex gap-4">
         <div className="flex-1">
@@ -276,7 +325,6 @@ const sortedTrips = [...overdueTrips, ...recentTrips];
       </div>
 
       {/* Table Section */}
-
       <div className="bg-white dark:bg-black rounded-lg shadow-sm overflow-x-auto relative max-h-[calc(100vh-150px)] max-w-[calc(100vw-150px)]">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead className="bg-gray-800">

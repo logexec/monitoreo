@@ -34,6 +34,8 @@ interface TripUpdatesListProps {
   isAlert: boolean;
 }
 
+// TODO:Actualizar el ordenamiento y busqueda de TODAS las columnas
+
 export function TripUpdatesList({ updates, isAlert }: TripUpdatesListProps) {
   if (!updates) {
     return (
