@@ -873,8 +873,8 @@ export function TripList() {
                           colSpan={table.getAllColumns().length}
                           className={`px-0 py-0 ${
                             (trip.minutesSinceUpdate || 0) >= 20
-                              ? "bg-red-50 dark:bg-red-900/20"
-                              : "bg-gray-50 dark:bg-gray-900/20"
+                              ? "bg-red-50 dark:bg-red-950"
+                              : "bg-gray-50 dark:bg-gray-900"
                           }`}
                         >
                           {trip.updates && trip.updates.length > 0 ? (
@@ -902,12 +902,12 @@ export function TripList() {
                                     key={update.id}
                                     className={`p-3 rounded-lg transition-colors ${
                                       index === 0
-                                        ? "bg-blue-50 border-l-4 border-blue-500 dark:bg-blue-900/20 dark:border-blue-400"
-                                        : "bg-white hover:bg-gray-50 dark:bg-gray-800/40 dark:hover:bg-gray-800/60"
+                                        ? "bg-blue-50 border-l-4 border-blue-500 dark:bg-indigo-900 dark:border-blue-400"
+                                        : "bg-white hover:bg-gray-50 dark:bg-indigo-800 dark:hover:bg-indigo-800/60"
                                     } ${
                                       index % 2 === 0
-                                        ? "dark:bg-opacity-40"
-                                        : "dark:bg-opacity-20"
+                                        ? "dark:bg-indigo-800/40"
+                                        : "dark:bg-indigo-800/20"
                                     }`}
                                   >
                                     <div className="flex justify-between items-start gap-x-2">
@@ -921,7 +921,7 @@ export function TripList() {
                                           </span>
                                         </div>
                                       </div>
-                                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-200 whitespace-nowrap">
                                         <span className="hidden sm:inline mr-1">
                                           Actualizado:
                                         </span>
