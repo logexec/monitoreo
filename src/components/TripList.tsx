@@ -873,7 +873,7 @@ export function TripList() {
                           colSpan={table.getAllColumns().length}
                           className={`px-0 py-0 ${
                             (trip.minutesSinceUpdate || 0) >= 20
-                              ? "bg-red-50 dark:bg-red-950"
+                              ? "bg-red-50 dark:bg-red-950 dark:border-y-4 dark:border-x-2 dark:border-red-900"
                               : "bg-gray-50 dark:bg-gray-900"
                           }`}
                         >
