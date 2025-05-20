@@ -91,6 +91,8 @@ export function ExpandableRow({
             ? "bg-alert bg-linear-to-r from-red-700 to-orange-400 via-amber-500 sticky top-[40px] z-20 text-white group-[.bg-alert]:text-white hover:bg-red-700 dark:hover:bg-red-600"
             : minutesSinceUpdate >= 13
             ? "bg-orange-500 text-black"
+            : minutesSinceUpdate < 13
+            ? "bg-white text-black"
             : "dark:bg-black"
         )}
       >
