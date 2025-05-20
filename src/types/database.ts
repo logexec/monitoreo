@@ -45,6 +45,7 @@ export interface Trip {
   created_at: string;
   updated_at: string;
   updates: TripUpdate[];
+  secondsSinceUpdate?: number;
   vehicle_id: number;
 }
 
@@ -55,6 +56,7 @@ export interface TripUpdate {
   status?: string;
   description?: string;
   notes: string;
+  user?: { name: string };
   image_token?: string | null;
   image_type?: string | null;
   image_url?: string | null;

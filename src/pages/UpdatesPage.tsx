@@ -1,18 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useId, useState } from "react";
-import { TripUpdate } from "../types/database";
+import { useEffect, useId, useState, useMemo } from "react";
+import { 
+  useReactTable, 
+  getCoreRowModel, 
+  getSortedRowModel, 
+  getFilteredRowModel,
+  flexRender,
+  ColumnDef,
+  FilterFn
+} from "@tanstack/react-table";
+import { Search, X, ChevronUp, ChevronDown, Filter, Check } from "lucide-react";
+import { TripUpdate, UpdateCategory } from "../types/database";
 import { StatusBadge } from "../components/StatusBadge";
-import { SortableHeader } from "../components/SortableHeader";
-import { SearchInput } from "../components/SearchInput";
-import { StatusFilter } from "../components/StatusFilter";
-import { sortUpdates } from "../utils/updateSorting";
-import { SortConfig } from "../types/sorting";
 import Loading from "@/components/Loading";
 import axios from "axios";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Interfaz extendida solo para UpdatesPage
 interface ExtendedTripUpdate extends TripUpdate {
@@ -27,44 +36,66 @@ interface ExtendedTripUpdate extends TripUpdate {
 }
 
 export function UpdatesPage() {
-  const [updates, setUpdates] = useState<
-    (TripUpdate & {
-      trip: {
-        trip_id: string;
-        plate_number: string;
-        project: string;
-        driver_name: string;
-        driver_phone: string;
-      };
-    })[]
-  >([]);
+  const [updates, setUpdates] = useState<ExtendedTripUpdate[]>([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    field: "created_at",
-    direction: "desc",
-  });
-  const { isLoading } = useAuth();
+  const [selectedStatus, setSelectedStatus] = useState<UpdateCategory[]>([]);
+  // const [statusFilter, setStatusFilter] = useState("all");
 
+  // Lista de estados disponibles con valores correctos según el tipo UpdateCategory
+  const statusOptions: { value: UpdateCategory; label: string }[] = [
+    { value: "INICIO_RUTA" as UpdateCategory, label: "Inicio de Ruta" },
+    { value: "SEGUIMIENTO" as UpdateCategory, label: "Seguimiento" },
+    { value: "VIAJE_CARGADO" as UpdateCategory, label: "Cargado" },
+    { value: "ACCIDENTE" as UpdateCategory, label: "Accidente" },
+    { value: "AVERIA" as UpdateCategory, label: "Avería" },
+    { value: "ROBO_ASALTO" as UpdateCategory, label: "Robo/Asalto" },
+    { value: "PERDIDA_CONTACTO" as UpdateCategory, label: "Pérdida de Contacto" },
+    { value: "VIAJE_FINALIZADO" as UpdateCategory, label: "Finalizado" },
+  ];
+  const [sorting, setSorting] = useState<any[]>([
+    { id: 'created_at', desc: true } // Ordenamiento inicial por fecha (más reciente primero)
+  ]);
+  const { isLoading: authLoading } = useAuth();
+  const [dataLoading, setDataLoading] = useState(true);
   const [selectedValue, setSelectedValue] = useState("100");
 
+  // Formatear fecha para mostrar
+  const formatDate = (dateStr: string): string => {
+    if (!dateStr) return "—";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-EC', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Formatear hora para mostrar
+  const formatTime = (dateStr: string): string => {
+    if (!dateStr) return "—";
+    const date = new Date(dateStr);
+    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+  };
+
+  // Cargar actualizaciones
   useEffect(() => {
     loadUpdates();
   }, [selectedValue]);
 
   const loadUpdates = async () => {
+    setDataLoading(true);
     try {
       const response = await axios.get(`/trip-updates?qty=${selectedValue}`);
 
-      const data = await response.data.map((update: ExtendedTripUpdate) => {
+      const data = response.data.map((update: ExtendedTripUpdate) => {
         return {
           ...update,
           trip: {
-            trip_id: update.trip!.system_trip_id || "—",
-            plate_number: update.trip!.plate_number || "—",
-            project: update.trip!.project || "—",
-            driver_name: update.trip!.driver_name || "—",
-            driver_phone: update.trip!.driver_phone || "—",
+            trip_id: update.trip?.system_trip_id || "—",
+            plate_number: update.trip?.plate_number || "—",
+            project: update.trip?.project || "—",
+            driver_name: update.trip?.driver_name || "—",
+            driver_phone: update.trip?.driver_phone || "—",
           },
         };
       });
@@ -72,37 +103,230 @@ export function UpdatesPage() {
     } catch (error) {
       console.error("Error loading updates:", error);
       toast.error("Error al cargar las actualizaciones");
+    } finally {
+      setDataLoading(false);
     }
   };
 
-  const handleSort = (field: string) => {
-    setSortConfig((prev) => ({
-      field,
-      direction:
-        prev.field === field && prev.direction === "asc" ? "desc" : "asc",
-    }));
+  // Función de filtro global personalizada
+  const globalFilterFn: FilterFn<ExtendedTripUpdate> = (row, _, filterValue) => {
+    if (!filterValue || filterValue === "") return true;
+    
+    const normalizedFilterValue = filterValue.toLowerCase();
+    
+    // Convertir todo el objeto a un texto de búsqueda
+    const update = row.original;
+    const searchText = [
+      // Datos principales
+      update.trip?.trip_id || "",
+      update.trip?.plate_number || "",
+      update.trip?.project || "",
+      update.trip?.driver_name || "",
+      update.trip?.driver_phone || "",
+      update.category || "",
+      update.notes || "",
+      update.user?.name || "",
+      formatDate(update.created_at || ""),
+      formatTime(update.created_at || ""),
+    ].join(" ").toLowerCase();
+    
+    return searchText.includes(normalizedFilterValue);
   };
 
-  const filteredUpdates = updates.filter((update) => {
-    const matchesSearch =
-      String(update.trip?.trip_id || "")
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
-      update.notes.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || update.category === statusFilter;
+  // Definición de columnas
+  const columns = useMemo<ColumnDef<ExtendedTripUpdate>[]>(() => [
+    // Placa
+    {
+      id: 'plate_number',
+      header: 'Placa',
+      accessorFn: (row) => row.trip?.plate_number || "—",
+      enableSorting: true,
+      sortingFn: 'alphanumeric',
+      cell: ({ row }) => {
+        const update = row.original;
+        return (
+          <div className="px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white font-medium">
+            {update.trip?.plate_number || "—"}
+          </div>
+        );
+      },
+    },
+    // Proyecto
+    {
+      id: 'project',
+      header: 'Proyecto',
+      accessorFn: (row) => row.trip?.project || "—",
+      enableSorting: true,
+      cell: ({ row }) => {
+        const update = row.original;
+        return (
+          <div className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+            {update.trip?.project || "—"}
+          </div>
+        );
+      },
+    },
+    // Conductor
+    {
+      id: 'driver_name',
+      header: 'Conductor',
+      accessorFn: (row) => row.trip?.driver_name || "—",
+      enableSorting: true,
+      cell: ({ row }) => {
+        const update = row.original;
+        return (
+          <div className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex flex-row space-x-1">
+              <span className="font-light">Chofer:</span>
+              <span className="font-medium">
+                {update.trip?.driver_name || "—"}
+              </span>
+            </div>
+            <div className="flex flex-row space-x-1">
+              <span className="font-light">Contacto:</span>
+              <span className="font-medium">
+                {update.trip?.driver_phone || "—"}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
+    // Estado
+    {
+      id: 'category',
+      header: 'Estado',
+      accessorFn: (row) => row.category,
+      enableSorting: true,
+      cell: ({ row }) => {
+        const update = row.original;
+        return (
+          <div className="px-6 py-4 whitespace-nowrap text-sm">
+            <StatusBadge category={update.category} />
+          </div>
+        );
+      },
+    },
+    // Notas
+    {
+      id: 'notes',
+      header: 'Notas',
+      accessorFn: (row) => row.notes,
+      enableSorting: true,
+      cell: ({ row }) => {
+        const update = row.original;
+        return (
+          <div className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-md">
+            <div className="line-clamp-2">{update.notes}</div>
+          </div>
+        );
+      },
+    },
+    // Reportado por
+    {
+      id: 'updated_by',
+      header: 'Reportado por',
+      accessorFn: (row) => row.user?.name || "—",
+      enableSorting: true,
+      cell: ({ row }) => {
+        const update = row.original;
+        return (
+          <div className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-md">
+            <div className="line-clamp-2">{update.user?.name || "—"}</div>
+          </div>
+        );
+      },
+    },
+    // Fecha
+    {
+      id: 'created_at',
+      header: 'Fecha',
+      accessorFn: (row) => new Date(row.created_at).getTime(),
+      enableSorting: true,
+      sortingFn: 'datetime',
+      cell: ({ row }) => {
+        const update = row.original;
+        return (
+          <div className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 capitalize flex flex-col space-y-0">
+            <span>
+              {formatDate(update.created_at)}
+            </span>
+            <span>
+              {formatTime(update.created_at)}
+            </span>
+          </div>
+        );
+      },
+    },
+  ], []);
 
-    return matchesSearch && matchesStatus;
+  // Configurar TanStack Table
+  const table = useReactTable({
+    data: updates,
+    columns,
+    state: {
+      globalFilter: search,
+      sorting: sorting,
+      columnFilters: selectedStatus.length > 0 ? [
+        {
+          id: 'category',
+          value: selectedStatus,
+        },
+      ] : [],
+    },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    globalFilterFn,
+    filterFns: {
+      // Función de filtro personalizada para categorías múltiples
+      multiSelect: (row, columnId, filterValue) => {
+        const value = row.getValue(columnId) as string;
+        return filterValue.includes(value);
+      },
+    },
   });
 
-  const sortedUpdates = sortUpdates(filteredUpdates, sortConfig);
+  // Calcular filas filtradas y ordenadas
+  const filteredRows = table.getFilteredRowModel().rows;
 
-  if (isLoading) {
+  if (authLoading || dataLoading) {
     return <Loading text="Cargando..." />;
   }
 
   return (
     <main className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      {/* Estilos para scrollbar personalizado */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #ccc;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #aaa;
+        }
+        @media (prefers-color-scheme: dark) {
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: #333;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #555;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #777;
+          }
+        }
+      `}} />
+      
       <div className="space-y-8">
         <section>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -110,141 +334,104 @@ export function UpdatesPage() {
           </h2>
 
           <div className="space-y-4">
-            <div className="flex space-x-3 w-full">
-              {/* Search Input */}
-              <div className="w-fit">
-                <SearchInput
-                  value={search}
-                  onChange={setSearch}
-                  placeholder="Buscar actualizaciones..."
-                />
+            <div className="flex flex-wrap gap-4">
+              {/* Buscador */}
+              <div className="flex-1 min-w-[300px]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600" />
+                  <input
+                    type="text"
+                    placeholder="Buscar actualizaciones..."
+                    className="pl-10 pr-10 py-2 w-full border rounded-lg dark:bg-black/40 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-all"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
-              {/* Filter  */}
-              <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+
+              {/* Filtro por estado mejorado con popover y multiselect */}
+              <StatusFilterPopover 
+                options={statusOptions} 
+                selected={selectedStatus} 
+                onChange={setSelectedStatus} 
+              />
 
               {/* Cantidad de actualizaciones */}
-              <UpdatesSelector selectedValue={selectedValue} setSelectedValue={setSelectedValue}/>
+              <UpdatesSelector selectedValue={selectedValue} setSelectedValue={setSelectedValue} />
             </div>
 
-            <div className="bg-white dark:bg-black rounded-lg shadow-sm overflow-x-auto relative max-h-[calc(100vh-220px)]">
+            <div className="bg-white dark:bg-black/60 rounded-lg shadow-sm overflow-x-auto relative max-h-[calc(100vh-220px)] custom-scrollbar">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                <thead className="bg-gray-800">
+                <thead className="bg-gray-800/95 backdrop-blur-sm sticky top-0">
                   <tr>
-                    <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                      <SortableHeader
-                        label="Placa"
-                        field="plate_number"
-                        currentField={sortConfig.field}
-                        direction={sortConfig.direction}
-                        onSort={handleSort}
-                      />
-                    </th>
-                    <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                      <SortableHeader
-                        label="Proyecto"
-                        field="project"
-                        currentField={sortConfig.field}
-                        direction={sortConfig.direction}
-                        onSort={handleSort}
-                      />
-                    </th>
-                    <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                      <SortableHeader
-                        label="Conductor"
-                        field="driver_name"
-                        currentField={sortConfig.field}
-                        direction={sortConfig.direction}
-                        onSort={handleSort}
-                      />
-                    </th>
-                    <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                      <SortableHeader
-                        label="Estado"
-                        field="category"
-                        currentField={sortConfig.field}
-                        direction={sortConfig.direction}
-                        onSort={handleSort}
-                      />
-                    </th>
-                    <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                      <span className="text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Notas
-                      </span>
-                    </th>
-                    <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                      <SortableHeader
-                        label="Reportado por"
-                        field="updated_by"
-                        currentField={sortConfig.field}
-                        direction={sortConfig.direction}
-                        onSort={handleSort}
-                      />
-                    </th>
-                    <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                      <SortableHeader
-                        label="Fecha"
-                        field="created_at"
-                        currentField={sortConfig.field}
-                        direction={sortConfig.direction}
-                        onSort={handleSort}
-                      />
-                    </th>
+                    {table.getFlatHeaders().map(header => (
+                      <th 
+                        key={header.id}
+                        className={`sticky top-0 bg-gray-800/95 backdrop-blur-sm z-10 px-6 py-3 text-left ${
+                          header.column.getCanSort() ? 'cursor-pointer hover:bg-gray-700/90' : ''
+                        }`}
+                      >
+                        <div 
+                          className="flex items-center text-sm font-medium text-gray-100"
+                          onClick={header.column.getCanSort() 
+                            ? () => header.column.toggleSorting() 
+                            : undefined
+                          }
+                        >
+                          {!header.isPlaceholder && flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          {header.column.getCanSort() && (
+                            <span className="ml-1">
+                              {{
+                                asc: <ChevronUp className="h-4 w-4 text-blue-400" />,
+                                desc: <ChevronDown className="h-4 w-4 text-blue-400" />,
+                              }[header.column.getIsSorted() as string] ?? (
+                                <ChevronDown className="h-4 w-4 text-gray-500 opacity-30" />
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-black divide-y divide-gray-200 dark:divide-gray-800">
-                  {sortedUpdates.map((update) => (
-                    <tr
-                      key={update.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-950"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white font-medium">
-                        {update.trip?.plate_number || "—"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {update.trip?.project || "—"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex flex-row space-x-1">
-                          <span className="font-light">Chofer:</span>
-                          <span className="font-medium">
-                            {update.trip.driver_name}
-                          </span>
-                        </div>
-                        <div className="flex flex-row space-x-1">
-                          <span className="font-light">Contacto:</span>
-                          <span className="font-medium">
-                            {update.trip.driver_phone}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <StatusBadge category={update.category} />
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 max-w-md">
-                        <div className="line-clamp-2">{update.notes}</div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 max-w-md">
-                        <div className="line-clamp-2">{update.user?.name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize flex flex-col space-y-0">
-                        <span>
-                          {new Date(update.created_at).toLocaleDateString(
-                            "es-EC",
-                            {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            }
-                          )}
-                        </span>
-                        <span>
-                          {new Date(update.created_at).getHours()}:
-                          {new Date(update.created_at).getMinutes()}:
-                          {new Date(update.created_at).getSeconds()}
-                        </span>
+                <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-800 dark:bg-transparent">
+                  {filteredRows.length > 0 ? (
+                    filteredRows.map(row => (
+                      <tr 
+                        key={row.original.id}
+                        className="transition-colors duration-300 hover:bg-gray-50 dark:hover:bg-gray-900/40"
+                      >
+                        {row.getVisibleCells().map(cell => (
+                          <td key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={table.getAllColumns().length}
+                        className="p-4 text-center text-gray-300 dark:text-gray-600"
+                      >
+                        No se encontraron actualizaciones con este filtro
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -255,6 +442,7 @@ export function UpdatesPage() {
   );
 }
 
+// Componente de selección de cantidad de actualizaciones
 function UpdatesSelector({ selectedValue, setSelectedValue }: {selectedValue: string, setSelectedValue: any}) {
   const id = useId();
   return (
@@ -283,5 +471,83 @@ function UpdatesSelector({ selectedValue, setSelectedValue }: {selectedValue: st
         </label>
       </RadioGroup>
     </div>
+  );
+}
+
+// Componente de filtro por estado con popover y multiselect
+function StatusFilterPopover({ 
+  options, 
+  selected, 
+  onChange 
+}: { 
+  options: { value: UpdateCategory; label: string }[]; 
+  selected: UpdateCategory[]; 
+  onChange: (value: UpdateCategory[]) => void; 
+}) {
+  const toggleOption = (value: UpdateCategory) => {
+    if (selected.includes(value)) {
+      onChange(selected.filter(item => item !== value));
+    } else {
+      onChange([...selected, value]);
+    }
+  };
+
+  const clearOptions = () => {
+    onChange([]);
+  };
+
+  const selectAllOptions = () => {
+    onChange(options.map(option => option.value));
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input hover:bg-accent hover:text-accent-foreground h-9 w-[150px] gap-1">
+          <Filter className="h-4 w-4 mr-1" />
+          <span>Estado</span>
+          {selected.length > 0 && (
+            <Badge className="rounded-sm px-1 font-normal ml-1 bg-primary" variant="outline">
+              {selected.length}
+            </Badge>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Buscar estado..." />
+          <CommandList>
+            <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+            <CommandGroup>
+              <ScrollArea className="h-[200px]">
+                <CommandItem onSelect={() => clearOptions()} className="justify-between font-normal">
+                  <span>Limpiar filtros</span>
+                  {selected.length === 0 && <Check className="h-4 w-4" />}
+                </CommandItem>
+                <CommandItem onSelect={() => selectAllOptions()} className="justify-between font-normal">
+                  <span>Seleccionar todos</span>
+                  {selected.length === options.length && <Check className="h-4 w-4" />}
+                </CommandItem>
+                <CommandGroup heading="Estados">
+                  {options.map((option) => (
+                    <CommandItem
+                      key={option.value}
+                      onSelect={() => toggleOption(option.value)}
+                      className="justify-between"
+                    >
+                      <div className="flex items-center">
+                        <StatusBadge category={option.value} />
+                        <span className="ml-2">{option.label}</span>
+                      </div>
+                      {selected.includes(option.value) && <Check className="h-4 w-4" />}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </ScrollArea>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
