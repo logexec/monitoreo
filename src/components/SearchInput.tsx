@@ -1,87 +1,48 @@
-/* eslint-disable */
-import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
-import { Trip } from "../types/database";
+import { useEffect, useState } from "react";
 
 interface SearchInputProps {
-  allTrips: Trip[];
-  onFilteredTripsChange: (filteredTrips: Trip[]) => void;
+  value: string;
+  onChange: (value: string) => void;
   placeholder?: string;
+  debounceMs?: number;
 }
 
 /**
- * Componente de búsqueda simplificado que maneja internamente toda la lógica
- * de filtrado y solo devuelve los resultados filtrados al componente padre
+ * Componente mejorado de entrada de búsqueda con debounce para evitar
+ * demasiadas actualizaciones durante la escritura
  */
 export function SearchInput({
-  allTrips,
-  onFilteredTripsChange,
-  placeholder = "Buscar viajes..."
+  value,
+  onChange,
+  placeholder = "Buscar...",
+  debounceMs = 300,
 }: SearchInputProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+  // Estado interno para el valor de entrada
+  const [inputValue, setInputValue] = useState(value);
   
-  // Realizar la búsqueda cuando cambia el término o los datos
+  // Efecto para sincronizar el valor externo con el interno
   useEffect(() => {
-    // Si no hay término de búsqueda, devolvemos todos los viajes
-    if (!searchTerm.trim()) {
-      onFilteredTripsChange(allTrips);
-      return;
+    setInputValue(value);
+  }, [value]);
+  
+  // Efecto para implementar debounce
+  useEffect(() => {
+    // Si el valor interno es diferente del externo, aplicamos debounce
+    if (inputValue !== value) {
+      const timer = setTimeout(() => {
+        onChange(inputValue);
+      }, debounceMs);
+      
+      return () => clearTimeout(timer);
     }
-    
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-    
-    // Función que convierte un objeto a texto plano para búsqueda
-    const objectToSearchableText = (obj: any): string => {
-      if (!obj) return "";
-      
-      if (typeof obj !== "object") {
-        return String(obj).toLowerCase();
-      }
-      
-      if (Array.isArray(obj)) {
-        return obj.map(item => objectToSearchableText(item)).join(" ");
-      }
-      
-      // Si es un objeto Date, formatearlo
-      if (obj instanceof Date) {
-        return obj.toLocaleDateString("es-EC", { 
-          day: "2-digit", 
-          month: "2-digit", 
-          year: "numeric" 
-        }).toLowerCase();
-      }
-      
-      // Para objetos regulares
-      return Object.values(obj)
-        .map(value => {
-          // Si es una fecha en string, intentar formatearla
-          if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
-            try {
-              const date = new Date(value);
-              if (!isNaN(date.getTime())) {
-                return date.toLocaleDateString("es-EC", { 
-                  day: "2-digit", 
-                  month: "2-digit", 
-                  year: "numeric" 
-                }).toLowerCase();
-              }
-            } catch (e) {
-              // Si falla, usamos el valor original
-            }
-          }
-          return objectToSearchableText(value);
-        })
-        .join(" ");
-    };
-    
-    // Filtrar viajes utilizando la función de conversión a texto
-    const filtered = allTrips.filter(trip => {
-      const searchableText = objectToSearchableText(trip);
-      return searchableText.includes(normalizedSearch);
-    });
-    
-    onFilteredTripsChange(filtered);
-  }, [searchTerm, allTrips, onFilteredTripsChange]);
+  }, [inputValue, value, onChange, debounceMs]);
+  
+  // Manejador para limpiar la búsqueda
+  const handleClear = () => {
+    setInputValue("");
+    onChange("");
+  };
   
   return (
     <div className="relative flex-1">
@@ -90,12 +51,12 @@ export function SearchInput({
         type="text"
         placeholder={placeholder}
         className="pl-10 pr-10 py-2 w-full border rounded-lg dark:bg-black"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
       />
-      {searchTerm && (
+      {inputValue && (
         <button
-          onClick={() => setSearchTerm("")}
+          onClick={handleClear}
           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400"
         >
           <X className="h-4 w-4" />
