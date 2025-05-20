@@ -57,6 +57,7 @@ export interface TripUpdate {
   notes: string;
   image_token?: string | null;
   image_type?: string | null;
+  image_url?: string | null;
   created_at: string;
   updated_by: string;
 }

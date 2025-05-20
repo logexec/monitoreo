@@ -1,20 +1,93 @@
-import React, { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { 
+  useReactTable, 
+  getCoreRowModel, 
+  getSortedRowModel, 
+  getFilteredRowModel,
+  flexRender,
+  ColumnDef,
+  FilterFn
+} from "@tanstack/react-table";
+import { Search, X, ChevronUp, ChevronDown, Trash2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Trip, TripUpdate } from "../types/database";
 import { TripUpdatePanel } from "./TripUpdatePanel";
-import { ExpandableRow } from "./ExpandableRow";
 import { StatusFilter } from "./StatusFilter";
-import { SearchInput } from "./SearchInput";
-import { SortableHeader } from "./SortableHeader";
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
-import { SortConfig } from "../types/sorting";
 import { getTrips } from "@/lib/axios";
 import Loading from "./Loading";
 import CustomSwitch from "./ui/CustomSwitch";
 import { useLocation } from "react-router-dom";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { ProjectMultiSelect } from "./ProjectMultiSelect";
+import { StatusBadge } from "./StatusBadge";
+import { StatusOption } from "./StatusOption";
+import { statusLabels } from "@/constants/statusMappings";
+
+// Función auxiliar para formatear fechas
+const formatDate = (dateStr: string | null): string => {
+  if (!dateStr) return "—";
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("es-EC", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch (e) {
+    return "—";
+  }
+};
+
+// Filtro global personalizado
+const globalFilterFn: FilterFn<Trip> = (row, columnId, filterValue) => {
+  if (!filterValue || filterValue === "") return true;
+  
+  const normalizedFilterValue = filterValue.toLowerCase();
+  
+  // Convertir todo el objeto de viaje a un texto de búsqueda
+  const trip = row.original;
+  const searchText = [
+    // Datos principales
+    trip.system_trip_id || "",
+    trip.external_trip_id || "",
+    trip.driver_name || "",
+    trip.driver_document || "",
+    trip.origin || "",
+    trip.destination || "",
+    trip.project || "",
+    trip.plate_number || "",
+    String(trip.vehicle_id || ""),
+    trip.property_type || "",
+    trip.shift || "",
+    trip.current_status || "",
+    trip.current_status_update || "",
+    trip.driver_phone || "",
+    
+    // Fechas formateadas
+    formatDate(trip.delivery_date),
+    formatDate(trip.created_at),
+    formatDate(trip.updated_at),
+    
+    // Updates
+    ...(trip.updates || []).flatMap(update => [
+      update.category || "",
+      update.notes || "",
+      formatDate(update.created_at),
+    ]),
+    
+    // GPS devices
+    ...(trip.gps_devices || []).flatMap(device => [
+      device.gps_provider || "",
+      device.user || "",
+    ]),
+  ].join(" ").toLowerCase();
+  
+  return searchText.includes(normalizedFilterValue);
+};
 
 export function TripList() {
   const [isLoading, setIsLoading] = useState(true);
@@ -23,13 +96,7 @@ export function TripList() {
   const [expandedTrips, setExpandedTrips] = useState<Set<string>>(new Set());
   const [selectedTrips, setSelectedTrips] = useState<Set<string>>(new Set());
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
-    null
-  );
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    field: "last_update", // Default sort by last update time
-    direction: "desc",    // Default sort direction newest first
-  });
+  const [now, setNow] = useState(Date.now());
 
   const { filters, setFilters } = useGlobalFilters();
   const { projects, search, status, selectedValue } = filters;
@@ -38,13 +105,13 @@ export function TripList() {
   const uniqueProjects = [...new Set(trips.map((t) => t.project))].sort();
   const projectOptions = uniqueProjects.map((p) => ({ value: p, label: p }));
 
-  const [now, setNow] = useState(Date.now());
-
+  // Actualizar el tiempo cada segundo
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 1000); // actualiza cada segundo
+    const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
+  // Aplicar filtros de la URL si existen
   useEffect(() => {
     if (location.state?.filtersOverride) {
       setFilters((prev) => ({
@@ -54,14 +121,14 @@ export function TripList() {
     }
   }, [location.state, setFilters]);
 
+  // Obtener datos
   useEffect(() => {
     const fetchTrips = async () => {
       setIsLoading(true);
       try {
-        const dateParam =
-          selectedValue === "on"
-            ? new Date().toISOString().slice(0, 10)
-            : undefined;
+        const dateParam = selectedValue === "on"
+          ? new Date().toISOString().slice(0, 10)
+          : undefined;
         const response = await getTrips(dateParam);
         setTrips(
           response.map((trip: Trip) => ({
@@ -85,6 +152,7 @@ export function TripList() {
     fetchTrips();
   }, [selectedValue]);
 
+  // Manejar creación de actualizaciones
   const handleUpdateCreated = (newUpdate: TripUpdate) => {
     setTrips((prevTrips) =>
       prevTrips.map((trip) =>
@@ -92,70 +160,34 @@ export function TripList() {
           ? {
               ...trip,
               updates: trip.updates?.some((u) => u.id === newUpdate.id)
-                ? trip.updates // Si ya existe, no agregar
-                : [newUpdate, ...(trip.updates || [])], // Si no existe, agregar
+                ? trip.updates
+                : [newUpdate, ...(trip.updates || [])],
             }
           : trip
       )
     );
   };
 
-  const toggleExpanded = (tripId: string) => {
-    const newExpanded = new Set(expandedTrips);
-    if (newExpanded.has(tripId)) {
-      newExpanded.delete(tripId);
-    } else {
-      newExpanded.add(tripId);
-    }
-    setExpandedTrips(newExpanded);
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedTrips(new Set(filteredTrips.map((trip) => trip.id)));
-    } else {
-      setSelectedTrips(new Set());
-    }
-  };
-
-  const handleSelectTrip = (
-    tripId: string,
-    checked: boolean,
-    index: number,
-    event?: React.MouseEvent
-  ) => {
-    if (event!.shiftKey && lastSelectedIndex !== null) {
-      const newSelected = new Set(selectedTrips);
-      const start = Math.min(lastSelectedIndex, index);
-      const end = Math.max(lastSelectedIndex, index);
-
-      sortedTrips.slice(start, end + 1).forEach((trip) => {
-        if (checked) {
-          newSelected.add(trip.id);
-        } else {
-          newSelected.delete(trip.id);
-        }
-      });
-
-      setSelectedTrips(newSelected);
-    } else {
-      const newSelected = new Set(selectedTrips);
-      if (checked) {
-        newSelected.add(tripId);
+  // Toggle expandir fila usando useCallback para evitar dependencias faltantes
+  const toggleExpanded = useCallback((tripId: string) => {
+    setExpandedTrips(prev => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(tripId)) {
+        newExpanded.delete(tripId);
       } else {
-        newSelected.delete(tripId);
+        newExpanded.add(tripId);
       }
-      setSelectedTrips(newSelected);
-      setLastSelectedIndex(index);
-    }
-  };
+      return newExpanded;
+    });
+  }, []);
 
+  // Manejar eliminación
   const handleDelete = async () => {
     try {
       const tripsToDelete =
         selectedTrips.size > 0
           ? Array.from(selectedTrips)
-          : [selectedTrip?.id].filter(Boolean);
+          : [selectedTrip?.id].filter(Boolean) as string[];
 
       setTrips(trips.filter((trip) => !tripsToDelete.includes(trip.id)));
       setSelectedTrips(new Set());
@@ -173,164 +205,430 @@ export function TripList() {
     }
   };
 
-  const handleSort = (field: string) => {
-    setSortConfig((prev) => ({
-      field,
-      direction:
-        prev.field === field && prev.direction === "asc" ? "desc" : "asc",
-    }));
-  };
+  // Enriquecer datos con cálculos de tiempo
+  const enrichedTrips = useMemo(() => {
+    return trips.map((trip) => {
+      const lastUpdate = trip.updates?.[0]?.created_at || trip.updated_at;
+      const updatedTime = lastUpdate ? new Date(lastUpdate).getTime() : now;
+      const diffSeconds = Math.floor((now - updatedTime) / 1000);
+      return {
+        ...trip,
+        secondsSinceUpdate: diffSeconds,
+        minutesSinceUpdate: Math.floor(diffSeconds / 60),
+        lastUpdateTimestamp: updatedTime,
+      };
+    });
+  }, [trips, now]);
 
-  const normalizedSearch = search.trim().toLowerCase();
+  // Definición de columnas para TanStack Table
+  const columns = useMemo<ColumnDef<Trip>[]>(() => [
+    // Columna de checkbox
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          checked={table.getIsAllRowsSelected()}
+          onChange={table.getToggleAllRowsSelectedHandler()}
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 ml-6"
+          checked={row.getIsSelected()}
+          onChange={row.getToggleSelectedHandler()}
+        />
+      ),
+      enableSorting: false,
+    },
+    // Columna de expandir
+    {
+      id: 'expand',
+      header: () => null,
+      cell: ({ row }) => (
+        <button
+          onClick={() => toggleExpanded(row.original.id)}
+          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-900 rounded"
+        >
+          {expandedTrips.has(row.original.id) ? (
+            <ChevronDown className="h-4 w-4 text-gray-500" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-gray-500" />
+          )}
+        </button>
+      ),
+    },
+    // Placa
+    {
+      id: 'plate_number',
+      header: 'Placa',
+      accessorKey: 'plate_number',
+      cell: ({ row }) => {
+        const trip = row.original;
+        const plate = trip.plate_number;
+        return (
+          <div 
+            className="px-4 py-4 whitespace-nowrap text-sm font-bold cursor-pointer"
+            onClick={() => setSelectedTrip(trip)}
+          >
+            {plate.slice(0, 3)}-{plate.slice(3)}
+          </div>
+        );
+      },
+    },
+    // Fecha
+    {
+      id: 'dates',
+      header: 'Fecha',
+      cell: ({ row }) => {
+        const trip = row.original;
+        return (
+          <div className="px-4 py-4 whitespace-nowrap text-sm flex flex-col space-y-1">
+            <div className="flex flex-row space-x-1 text-xs">
+              <span className="font-light">Entrega prevista:</span>
+              <span className="font-medium">
+                {formatDate(trip.delivery_date)}
+              </span>
+            </div>
+            <div className="flex flex-row space-x-1 text-xs">
+              <span className="font-light">Creado el:</span>
+              <span className="font-medium">
+                {formatDate(trip.created_at)}
+              </span>
+            </div>
+            <div className="flex flex-row space-x-1 text-xs">
+              <span className="font-light">Inicio de ruta:</span>
+              <span className="font-medium">
+                {formatDate(trip.updated_at)}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
+    // Conductor
+    {
+      id: 'driver',
+      header: 'Conductor',
+      accessorKey: 'driver_name',
+      cell: ({ row }) => {
+        const trip = row.original;
+        return (
+          <div className="px-4 py-4 whitespace-nowrap text-sm min-w-[140px] capitalize">
+            <div className="flex flex-col space-y-0">
+              <span>{trip.driver_name.toLowerCase()}</span>
+              {trip.driver_document ? (
+                <small className="text-gray-400 italic dark:text-gray-600">
+                  {trip.driver_document}
+                </small>
+              ) : (
+                <small className="text-gray-300 italic dark:text-gray-600 font-medium">
+                  Sin documento de Identidad
+                </small>
+              )}
+              {/* Teléfono del conductor - simplificado para este ejemplo */}
+              {trip.driver_phone ? (
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {trip.driver_phone}
+                </div>
+              ) : (
+                <small className="text-gray-300 italic dark:text-gray-400 font-medium">
+                  Sin número de contacto
+                </small>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    // Ruta
+    {
+      id: 'route',
+      header: 'Ruta',
+      cell: ({ row }) => {
+        const trip = row.original;
+        return (
+          <div className="px-4 py-4 whitespace-nowrap text-sm">
+            <div className="flex flex-col space-y-1">
+              <div className="flex flex-row text-xs space-x-1">
+                <span className="font-light">Origen:</span>
+                <span className="max-w-[20ch] truncate font-medium">
+                  {trip.origin || "—"}
+                </span>
+              </div>
+              <div className="flex flex-row text-xs space-x-1">
+                <span className="font-light">Destino:</span>
+                <span className="max-w-[20ch] truncate font-medium">
+                  {trip.destination || "—"}
+                </span>
+              </div>
+              <div className="flex flex-row text-xs space-x-1">
+                <span className="font-light">No. Viaje:</span>
+                <span className="font-medium">
+                  {trip.external_trip_id || "—"}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      },
+    },
+    // Proyecto
+    {
+      id: 'project',
+      header: 'Proyecto',
+      accessorKey: 'project',
+      cell: ({ row }) => (
+        <div className="py-0.5 whitespace-nowrap text-sm text-center truncate max-w-[8ch]">
+          {row.original.project}
+        </div>
+      ),
+    },
+    // Estado
+    {
+      id: 'status',
+      header: 'Estado',
+      accessorKey: 'current_status',
+      cell: ({ row }) => {
+        const trip = row.original;
+        const latestUpdate = trip.updates?.[0];
+        
+        return (
+          <div className="px-6 py-4 whitespace-nowrap text-sm">
+            {latestUpdate?.category ? (
+              <StatusOption
+                status={trip.current_status}
+                label={statusLabels[trip.current_status]}
+              />
+            ) : (
+              <span className="text-gray-400 dark:text-gray-600">—</span>
+            )}
+          </div>
+        );
+      },
+    },
+    // Novedad
+    {
+      id: 'category',
+      header: 'Novedad',
+      accessorKey: 'updates[0].category',
+      cell: ({ row }) => {
+        const latestUpdate = row.original.updates?.[0];
+        
+        return (
+          <div className="px-6 py-4 whitespace-nowrap text-sm">
+            {latestUpdate?.category ? (
+              <StatusBadge category={latestUpdate.category} />
+            ) : (
+              <span className="text-gray-400 dark:text-gray-600">—</span>
+            )}
+          </div>
+        );
+      },
+    },
+    // GPS
+    {
+      id: 'gps',
+      header: 'Proveedor GPS',
+      cell: ({ row }) => {
+        const trip = row.original;
+        
+        return (
+          <div className="px-6 py-4 whitespace-nowrap text-sm min-w-[180px]">
+            {(trip.gps_devices.length && (
+              <ul>
+                {trip.gps_devices.map((device) => (
+                  <li key={device.id}>
+                    {device.uri_gps ? (
+                      <div className="flex flex-col">
+                        <a
+                          href={device.uri_gps}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-red-600 visited:text-red-400 dark:visited:text-red-400 dark:text-red-600 underline underline-offset-2 text-sm text-center font-medium"
+                        >
+                          {device.gps_provider}
+                        </a>
+                        <div className="grid grid-cols-[auto_auto] gap-2 text-xs">
+                          <span>Usuario:</span>
+                          <span>{device.user || "N/A"}</span>
+                        </div>
+                        <div className="grid grid-cols-[auto_auto] gap-6 text-xs">
+                          <span>Clave: </span>
+                          <span>{device.password || "N/A"}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 dark:text-gray-600 text-center">
+                        {device.gps_provider || "No provisto"}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )) || (
+              <span className="text-gray-400 dark:text-gray-600 flex flex-col text-center mx-auto">
+                —
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    // Tiempo
+    {
+      id: 'last_update',
+      header: 'Tiempo',
+      cell: ({ row }) => {
+        const trip = row.original as Trip & { 
+          secondsSinceUpdate?: number;
+          minutesSinceUpdate?: number;
+        };
+        
+        // Format elapsed time
+        const formatElapsedTime = (seconds: number): string => {
+          const hrs = Math.floor(seconds / 3600);
+          const mins = Math.floor((seconds % 3600) / 60);
+          const secs = seconds % 60;
+          const pad = (n: number) => String(n).padStart(2, "0");
+          return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+        };
+        
+        // Determine class based on elapsed time
+        const getTimeClass = () => {
+          const minutes = trip.minutesSinceUpdate || 0;
+          if (minutes >= 20) {
+            return "text-white font-bold"; // Critical alert
+          } else if (minutes >= 13) {
+            return "text-black font-semibold"; // Warning
+          }
+          return "text-gray-900 dark:text-gray-100"; // Normal
+        };
+        
+        const lastUpdate = trip.updates?.[0]?.created_at;
+        const secondsElapsed = trip.secondsSinceUpdate || 0;
+        
+        return (
+          <div className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px]">
+            <span
+              className={`${
+                lastUpdate
+                  ? getTimeClass() + " group-[.bg-alert]:text-white"
+                  : "text-gray-400 dark:text-gray-600"
+              }`}
+              data-minutes={trip.minutesSinceUpdate}
+            >
+              {lastUpdate ? formatElapsedTime(secondsElapsed) : "—"}
+            </span>
+          </div>
+        );
+      },
+    },
+  ], [expandedTrips, toggleExpanded, now]);
 
-  const filteredTrips = trips.filter((trip) => {
-    // Si no hay texto de búsqueda, devolvemos true para este filtro
-    if (!normalizedSearch) {
-      return true;
-    }
-
-    // Búsqueda en todos los campos relevantes
-    const matchesSearch = [
-      // Campos directos del viaje
-      trip.system_trip_id?.toLowerCase(),
-      trip.external_trip_id?.toLowerCase(),
-      trip.driver_name?.toLowerCase(),
-      trip.driver_document,
-      trip.origin?.toLowerCase(),
-      trip.destination?.toLowerCase(),
-      trip.delivery_date,
-      trip.driver_phone,
-      trip.plate_number?.toLowerCase(),
-      trip.current_status_update?.toLowerCase(),
-      trip.project?.toLowerCase(),
-      
-      // Búsqueda en campos de fecha formateados
-      new Date(trip.delivery_date).toLocaleDateString('es-EC'),
-      new Date(trip.created_at).toLocaleDateString('es-EC'),
-      new Date(trip.updated_at).toLocaleDateString('es-EC'),
-      
-      // Búsqueda en actualizaciones
-      ...(trip.updates?.map(update => 
-        [
-          update.status?.toLowerCase(),
-          update.description?.toLowerCase(),
-          update.category?.toLowerCase(),
-          new Date(update.created_at).toLocaleDateString('es-EC')
-        ]
-      )?.flat() || []),
-      
-      // Búsqueda en dispositivos GPS
-      ...(trip.gps_devices?.map(device => 
-        [
-          device.gps_provider?.toLowerCase(),
-          device.user?.toLowerCase()
-        ]
-      )?.flat() || [])
-      
-    ].some(field => field && field.includes(normalizedSearch));
-
-    const matchesStatus =
-      filters.status === "all" ||
-      trip.updates?.[0]?.category === filters.status;
-
-    const matchesProject =
-      projects.length === 0 || projects.includes(trip.project);
-
-    return matchesSearch && matchesStatus && matchesProject;
+  // Configurar TanStack Table
+  const table = useReactTable({
+    data: enrichedTrips,
+    columns,
+    state: {
+      globalFilter: search,
+      rowSelection: Object.fromEntries(
+        Array.from(selectedTrips).map(id => [id, true])
+      ),
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: (updater) => {
+      const newSelection = 
+        typeof updater === 'function'
+          ? updater(Object.fromEntries(Array.from(selectedTrips).map(id => [id, true])))
+          : updater;
+          
+      setSelectedTrips(new Set(
+        Object.entries(newSelection)
+          .filter(([_, selected]) => selected)
+          .map(([id]) => id)
+      ));
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    globalFilterFn,
   });
 
-  // Enrich trips with time calculations
-  const enrichedTrips = filteredTrips.map((trip) => {
-    const lastUpdate = trip.updates?.[0]?.created_at || trip.updated_at;
-    const updatedTime = new Date(lastUpdate).getTime();
-    const diffSeconds = Math.floor((now - updatedTime) / 1000);
-    return {
-      ...trip,
-      secondsSinceUpdate: diffSeconds,
-      minutesSinceUpdate: Math.floor(diffSeconds / 60),
-      lastUpdateTimestamp: updatedTime,
-    };
+  // Filtrado por proyecto
+  const projectFilteredRows = table.getFilteredRowModel().rows.filter(row => {
+    const trip = row.original;
+    return projects.length === 0 || projects.includes(trip.project);
   });
 
-  // Apply user-selected sorting
-  const sortedTrips = [...enrichedTrips].sort((a, b) => {
-    if (!sortConfig.field) return 0;
-
-    // Implement priority sorting - critical alerts always first
-    if (a.minutesSinceUpdate >= 20 && b.minutesSinceUpdate < 20) return -1;
-    if (a.minutesSinceUpdate < 20 && b.minutesSinceUpdate >= 20) return 1;
-
-    // Handle the specific field sorting
-    let result = 0;
-    switch (sortConfig.field) {
-      case "last_update":
-        // For time since last update, we sort by the timestamp
-        result = a.lastUpdateTimestamp - b.lastUpdateTimestamp;
-        break;
-      case "plate_number":
-        result = a.plate_number.localeCompare(b.plate_number);
-        break;
-      case "delivery_date":
-        result = new Date(a.delivery_date).getTime() - new Date(b.delivery_date).getTime();
-        break;
-      case "driver_name":
-        result = a.driver_name.localeCompare(b.driver_name);
-        break;
-      case "project":
-        result = a.project.localeCompare(b.project);
-        break;
-      case "status_category": {
-        const statusA = a.updates?.[0]?.category ? a.updates[0].category : "";
-        const statusB = b.updates?.[0]?.category ? b.updates[0].category : "";
-        result = statusA.localeCompare(statusB);
-        break;
-      }
-      case "current_status_update": {
-        result = a.current_status_update.localeCompare(b.current_status_update);
-        break;
-      }
-      case "gps_provider": {
-        const providerA = a.gps_devices?.[0]?.gps_provider ? a.gps_devices[0].gps_provider : "";
-        const providerB = b.gps_devices?.[0]?.gps_provider ? b.gps_devices[0].gps_provider : "";
-        result = providerA.localeCompare(providerB);
-        break;
-      }
-      default: {
-        // For any other field
-        const valueA = a[sortConfig.field as keyof typeof a];
-        const valueB = b[sortConfig.field as keyof typeof b];
-        if (typeof valueA === "string" && typeof valueB === "string") {
-          result = valueA.localeCompare(valueB);
-        } else if (typeof valueA === "number" && typeof valueB === "number") {
-          result = valueA - valueB;
-        }
-        break;
-      }
-    }
-
-    // Apply the sort direction
-    return sortConfig.direction === "asc" ? result : -result;
+  // Filtrado por estado
+  const filteredRows = projectFilteredRows.filter(row => {
+    const trip = row.original;
+    return status === "all" || trip.updates?.[0]?.category === status;
+  });
+  
+  // Ordenar filas por tiempo (alertas primero)
+  const sortedRows = [...filteredRows].sort((a, b) => {
+    const tripA = a.original as Trip & { minutesSinceUpdate?: number };
+    const tripB = b.original as Trip & { minutesSinceUpdate?: number };
+    
+    // Alertas primero
+    if ((tripA.minutesSinceUpdate || 0) >= 20 && (tripB.minutesSinceUpdate || 0) < 20) return -1;
+    if ((tripA.minutesSinceUpdate || 0) < 20 && (tripB.minutesSinceUpdate || 0) >= 20) return 1;
+    
+    // Luego advertencias
+    if ((tripA.minutesSinceUpdate || 0) >= 13 && (tripB.minutesSinceUpdate || 0) < 13) return -1;
+    if ((tripA.minutesSinceUpdate || 0) < 13 && (tripB.minutesSinceUpdate || 0) >= 13) return 1;
+    
+    // Resto de filas según el orden actual
+    return 0;
   });
 
   if (isLoading) {
     return <Loading text="Cargando viajes..." fullScreen />;
   }
 
+  const getRowClassName = (row: any) => {
+    const trip = row.original as Trip & { minutesSinceUpdate?: number };
+    const minutes = trip.minutesSinceUpdate || 0;
+    
+    if (minutes >= 20) {
+      return "bg-alert bg-linear-to-r from-red-700 to-orange-400 via-amber-500 sticky top-[40px] z-20 text-white group-[.bg-alert]:text-white hover:bg-red-700 dark:hover:bg-red-600";
+    } 
+    if (minutes >= 13) {
+      return "bg-orange-500 text-black";
+    }
+    if (minutes < 13) {
+      return "bg-white text-black";
+    }
+    return "dark:bg-black";
+  };
+
   return (
     <div className="space-y-4 py-5 px-2 mx-auto">
       {/* Filter Section */}
       <div className="flex gap-4">
         <div className="flex-1">
-          <SearchInput
-            value={search}
-            onChange={(v) =>
-              setFilters((f) => ({
-                ...f,
-                search: v,
-              }))
-            }
-            placeholder={`Buscar viajes... (${trips.length})`}
-          />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600" />
+            <input
+              type="text"
+              placeholder={`Buscar viajes... (${trips.length})`}
+              className="pl-10 pr-10 py-2 w-full border rounded-lg dark:bg-black"
+              value={search}
+              onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
+            />
+            {search && (
+              <button
+                onClick={() => setFilters(f => ({ ...f, search: "" }))}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <CustomSwitch />
@@ -362,126 +660,146 @@ export function TripList() {
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead className="bg-gray-800">
             <tr>
-              <th className="sticky top-0 bg-gray-800 z-10 w-8 px-2">
-                <input
-                  type="checkbox"
-                  className="rounded border-gray-300 dark:border-gray-700
-                   text-blue-600 dark:text-blue-400 focus:ring-blue-500"
-                  checked={
-                    selectedTrips.size === sortedTrips.length &&
-                    sortedTrips.length > 0
-                  }
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                />
-              </th>
-              <th className="sticky top-0 bg-gray-800 z-10 w-8 px-2"></th>
-              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                <SortableHeader
-                  label="Placa"
-                  field="plate_number"
-                  currentField={sortConfig.field}
-                  direction={sortConfig.direction}
-                  onSort={handleSort}
-                />
-              </th>
-              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                <SortableHeader
-                  label="Fecha"
-                  field="delivery_date"
-                  currentField={sortConfig.field}
-                  direction={sortConfig.direction}
-                  onSort={handleSort}
-                />
-              </th>
-              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                <SortableHeader
-                  label="Conductor"
-                  field="driver_name"
-                  currentField={sortConfig.field}
-                  direction={sortConfig.direction}
-                  onSort={handleSort}
-                />
-              </th>
-              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                <SortableHeader
-                  label="Ruta"
-                  field="route"
-                  currentField={sortConfig.field}
-                  direction={sortConfig.direction}
-                  onSort={handleSort}
-                />
-              </th>
-              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                <SortableHeader
-                  label="Proyecto"
-                  field="project"
-                  currentField={sortConfig.field}
-                  direction={sortConfig.direction}
-                  onSort={handleSort}
-                />
-              </th>
-              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                <SortableHeader
-                  label="Estado"
-                  field="status_category"
-                  currentField={sortConfig.field}
-                  direction={sortConfig.direction}
-                  onSort={handleSort}
-                />
-              </th>
-              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left">
-                <SortableHeader
-                  label="Novedad"
-                  field="current_status_update"
-                  currentField={sortConfig.field}
-                  direction={sortConfig.direction}
-                  onSort={handleSort}
-                />
-              </th>
-              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left min-w-[140px]">
-                <SortableHeader
-                  label="Proveedor GPS"
-                  field="gps_provider"
-                  currentField={sortConfig.field}
-                  direction={sortConfig.direction}
-                  onSort={handleSort}
-                />
-              </th>
-              <th className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left min-w-[140px]">
-                <SortableHeader
-                  label="Tiempo"
-                  field="last_update"
-                  currentField={sortConfig.field}
-                  direction={sortConfig.direction}
-                  onSort={handleSort}
-                />
-              </th>
+              {table.getFlatHeaders().map(header => (
+                <th 
+                  key={header.id}
+                  className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left"
+                  onClick={header.column.getToggleSortingHandler()}
+                >
+                  {header.isPlaceholder ? null : (
+                    <div className="flex items-center text-sm font-medium text-gray-100">
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {header.column.getCanSort() && (
+                        <span className="ml-1">
+                          {{
+                            asc: <ChevronUp className="h-4 w-4" />,
+                            desc: <ChevronDown className="h-4 w-4" />,
+                          }[header.column.getIsSorted() as string] ?? null}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-200">
-            {sortedTrips.length > 1 ? (
-              sortedTrips.map((trip, index) => (
-                <ExpandableRow
-                  key={trip.id}
-                  index={index}
-                  trip={trip}
-                  isExpanded={expandedTrips.has(trip.id)}
-                  isSelected={selectedTrips.has(trip.id)}
-                  onToggleExpand={() => toggleExpanded(trip.id)}
-                  onToggleSelect={(checked, event) =>
-                    handleSelectTrip(trip.id, checked, index, event)
-                  }
-                  onTripSelect={setSelectedTrip}
-                  updates={trip.updates || []}
-                  secondsSinceUpdate={trip.secondsSinceUpdate}
-                  minutesSinceUpdate={trip.minutesSinceUpdate}
-                  isAlert={trip.minutesSinceUpdate >= 20}
-                />
-              ))
+          <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-800">
+            {sortedRows.length > 0 ? (
+              sortedRows.map(row => {
+                const trip = row.original as Trip & { 
+                  minutesSinceUpdate?: number;
+                  secondsSinceUpdate?: number;
+                };
+                
+                return (
+                  <React.Fragment key={row.id}>
+                    <tr 
+                      className={`transition-colors duration-500 group hover:bg-gray-50 dark:hover:bg-gray-950 ${getRowClassName(row)}`}
+                    >
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id} className="whitespace-nowrap">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                    
+                    {/* Expanded Row Content - Versión mejorada */}
+                    {expandedTrips.has(trip.id) && (
+                      <tr>
+                        <td
+                          colSpan={table.getAllColumns().length}
+                          className={`px-0 py-0 ${
+                            (trip.minutesSinceUpdate || 0) >= 20
+                              ? "bg-red-50 dark:bg-red-900/20"
+                              : "bg-gray-50 dark:bg-gray-900/20"
+                          }`}
+                        >
+                          {trip.updates && trip.updates.length > 0 ? (
+                            <div className="p-4 transition-all duration-300 ease-in-out">
+                              <div className="flex items-center justify-between mb-3">
+                                <h4 className={`font-semibold text-sm ${
+                                  (trip.minutesSinceUpdate || 0) >= 20 
+                                    ? "text-red-700 dark:text-red-400" 
+                                    : "text-gray-700 dark:text-gray-300"
+                                }`}>
+                                  Historial de Actualizaciones ({trip.updates.length})
+                                </h4>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  Mostrando todas las actualizaciones
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-1 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                {trip.updates.map((update, index) => (
+                                  <div 
+                                    key={update.id}
+                                    className={`p-3 rounded-lg transition-colors ${
+                                      index === 0 
+                                        ? "bg-blue-50 border-l-4 border-blue-500 dark:bg-blue-900/20 dark:border-blue-400" 
+                                        : "bg-white hover:bg-gray-50 dark:bg-gray-800/40 dark:hover:bg-gray-800/60"
+                                    } ${
+                                      index % 2 === 0 
+                                        ? "dark:bg-opacity-40" 
+                                        : "dark:bg-opacity-20"
+                                    }`}
+                                  >
+                                    <div className="flex justify-between items-start gap-x-2">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <StatusBadge category={update.category} />
+                                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                            {update.notes || "Sin detalles"}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                        <span className="hidden sm:inline mr-1">Actualizado:</span>
+                                        {formatDate(update.created_at)}
+                                        <span className="ml-1 text-xs">
+                                          {new Date(update.created_at).toLocaleTimeString('es-EC', {
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                          })}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    
+                                    {update.image_url && (
+                                      <div className="mt-2">
+                                        <img 
+                                          src={update.image_url} 
+                                          alt="Imagen de actualización" 
+                                          className="h-20 rounded border border-gray-200 dark:border-gray-700"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="py-6 text-center">
+                              <span className="inline-block py-3 px-4 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm">
+                                No hay actualizaciones disponibles para este viaje
+                              </span>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })
             ) : (
               <tr>
                 <td
-                  colSpan={10}
+                  colSpan={table.getAllColumns().length}
                   className="p-4 text-center text-gray-300 dark:text-gray-600"
                 >
                   No se encontraron viajes con este filtro
@@ -492,6 +810,7 @@ export function TripList() {
         </table>
       </div>
 
+      {/* Delete Modal */}
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
         itemCount={selectedTrips.size || (selectedTrip ? 1 : 0)}
@@ -499,6 +818,7 @@ export function TripList() {
         onCancel={() => setShowDeleteModal(false)}
       />
 
+      {/* Trip Update Panel */}
       {selectedTrip && (
         <TripUpdatePanel
           trip={
