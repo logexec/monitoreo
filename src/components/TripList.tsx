@@ -39,6 +39,7 @@ import { ProjectMultiSelect } from "./ProjectMultiSelect";
 import { StatusBadge } from "./StatusBadge";
 import { StatusOption } from "./StatusOption";
 import { statusLabels } from "@/constants/statusMappings";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 // Función auxiliar para formatear fechas
 const formatDate = (dateStr: string | null): string => {
@@ -417,13 +418,47 @@ export function TripList() {
                 <div className="flex flex-row text-xs space-x-1">
                   <span className="font-light">Origen:</span>
                   <span className="max-w-[20ch] truncate font-medium">
-                    {trip.origin || "—"}
+                    {
+                      trip.origin && trip.origin?.length > 15 ? (
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger className="max-w-[20ch] truncate font-medium">
+                              {trip.origin}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {trip.origin}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <span>
+                        {trip.origin || "—"}
+                        </span>
+                      )
+                    }
                   </span>
                 </div>
                 <div className="flex flex-row text-xs space-x-1">
                   <span className="font-light">Destino:</span>
                   <span className="max-w-[20ch] truncate font-medium">
-                    {trip.destination || "—"}
+                    {
+                      trip.destination && trip.destination?.length > 15 ? (
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger className="max-w-[20ch] truncate font-medium">
+                              {trip.destination}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {trip.destination}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <span>
+                        {trip.destination || "—"}
+                        </span>
+                      )
+                    }
                   </span>
                 </div>
                 <div className="flex flex-row text-xs space-x-1">
