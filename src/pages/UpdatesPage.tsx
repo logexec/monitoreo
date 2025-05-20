@@ -296,33 +296,34 @@ export function UpdatesPage() {
     });
   }, []);
 
-  // Configurar TanStack Table optimizado para datos locales
+  // Configurar TanStack Table
   const table = useReactTable({
-    data: updates,
-    columns,
-    state: {
-      globalFilter: search,
-      sorting: sorting,
-      columnFilters: columnFilters,
+  data: updates,
+  columns,
+  enableSorting: true,
+  state: {
+    globalFilter: search,
+    sorting: sorting,
+    columnFilters: columnFilters,
+  },
+  onSortingChange: setSorting,
+  onColumnFiltersChange: setColumnFilters,
+  getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),
+  getFilteredRowModel: getFilteredRowModel(),
+  globalFilterFn,
+  enableRowSelection: false,
+  debugTable: false,
+  debugHeaders: false,
+  debugColumns: false,
+  filterFns: {
+    multiSelect: (row, columnId, filterValue) => {
+      const value = row.getValue(columnId) as string;
+      return filterValue.includes(value);
     },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    globalFilterFn,
-    // Opciones de rendimiento
-    enableRowSelection: false, // Desactivar si no lo necesitas
-    debugTable: false,        // Desactivar en producción
-    debugHeaders: false,
-    debugColumns: false,
-    filterFns: {
-      multiSelect: (row, columnId, filterValue) => {
-        const value = row.getValue(columnId) as string;
-        return filterValue.includes(value);
-      },
-    }
-  });
+  },
+});
+
 
   // Obtener filas filtradas
   const { rows } = table.getFilteredRowModel();
@@ -438,13 +439,13 @@ export function UpdatesPage() {
                           header.column.getCanSort() ? 'cursor-pointer hover:bg-gray-700/90' : ''
                         }`}
                         style={{ width: header.id === 'notes' ? '25%' : 'auto' }}
+                        // onClick={header.column.getCanSort() 
+                        //     ? () => header.column.toggleSorting() 
+                        //     : undefined
+                        //   }
                       >
                         <div 
                           className="flex items-center text-sm font-medium text-gray-100"
-                          onClick={header.column.getCanSort() 
-                            ? () => header.column.toggleSorting() 
-                            : undefined
-                          }
                         >
                           {!header.isPlaceholder && flexRender(
                             header.column.columnDef.header,
