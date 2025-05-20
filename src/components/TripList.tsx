@@ -51,7 +51,7 @@ const formatDate = (dateStr: string | null): string => {
 };
 
 // Filtro global personalizado
-const globalFilterFn: FilterFn<Trip> = (row, columnId, filterValue) => {
+const globalFilterFn: FilterFn<Trip> = (row, _, filterValue) => {
   if (!filterValue || filterValue === "") return true;
 
   const normalizedFilterValue = filterValue.toLowerCase();
@@ -632,7 +632,8 @@ export function TripList() {
   });
 
   // Ordenar filas por tiempo (alertas primero)
-  const sortedRows = [...filteredRows].sort((a, b) => {
+  // Para deshacer, renombrar a sortedRows y eliminar el sortedRows actual
+  const sortedRowsByAlert = [...filteredRows].sort((a, b) => {
     const tripA = a.original as Trip & { minutesSinceUpdate?: number };
     const tripB = b.original as Trip & { minutesSinceUpdate?: number };
 
@@ -663,6 +664,16 @@ export function TripList() {
     // Resto de filas según el orden actual
     return 0;
   });
+
+  // Filas resultantes: si el usuario ha clicado en “Placa” o “Tiempo”, usamos el orden de la tabla
+  const sortedRows = (() => {
+    const sortId = sorting[0]?.id;
+    if (sortId === "plate_number" || sortId === "last_update") {
+      return table.getSortedRowModel().rows;
+    }
+    // Si no hay orden activo sobre esas columnas, aplicamos la lógica de alertas
+    return sortedRowsByAlert;
+  })();
 
   if (isLoading) {
     return <Loading text="Cargando viajes..." fullScreen />;
