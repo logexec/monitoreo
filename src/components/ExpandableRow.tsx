@@ -88,7 +88,7 @@ export function ExpandableRow({
           "transition-colors duration-500 group",
           "hover:bg-gray-50 dark:hover:bg-gray-950",
           minutesSinceUpdate >= 20
-            ? "bg-alert bg-red-600 dark:bg-red-700 sticky top-[40px] z-20 text-white group-[.bg-alert]:text-white hover:bg-red-700 dark:hover:bg-red-600"
+            ? "bg-alert bg-linear-to-r from-red-700 to-orange-400 via-amber-500 sticky top-[40px] z-20 text-white group-[.bg-alert]:text-white hover:bg-red-700 dark:hover:bg-red-600"
             : minutesSinceUpdate >= 13
             ? "bg-orange-500 text-black"
             : "dark:bg-black"
@@ -402,7 +402,7 @@ export function ExpandableRow({
             colSpan={11}
             className={`px-6 py-4 bg-gray-50 dark:bg-gray-950 pr-24 ${
               minutesSinceUpdate >= 20 &&
-              "bg-orange-500/90 dark:bg-orange-700 text-white"
+              "bg-yellow-600 dark:bg-orange-700 text-white"
             }`}
           >
             <TripUpdatesList
