@@ -214,13 +214,17 @@ export function TripUpdatePanel({
                   }
                   className="w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-xs focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-black"
                 >
-                  {Object.entries(updateCategoryLabels).map(
-                    ([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    )
-                  )}
+                  <optgroup label="P1: Incidentes Cr&iacute;ticos" className="text-slate-600 dark:text-slate-400 font-light">
+                    <option className="text-slate-900 dark:text-slate-100 font-normal" value="ACCIDENTE">Accidente</option>
+                    <option className="text-slate-900 dark:text-slate-100 font-normal" value="AVERIA">Avería</option>
+                    <option className="text-slate-900 dark:text-slate-100 font-normal" value="PERDIDA_CONTACTO">Pérdida de Contacto</option>
+                    <option className="text-slate-900 dark:text-slate-100 font-normal" value="ROBO_ASALTO">Robo/Asalto</option>
+                  </optgroup>
+                  <optgroup label="P2: Seguimiento" className="text-slate-600 dark:text-slate-400 font-light">
+                    <option className="text-slate-900 dark:text-slate-100 font-normal" value="SEGUIMIENTO">Seguimiento</option>
+                    <option className="text-slate-900 dark:text-slate-100 font-normal" value="VIAJE_CARGADO">Viaje Cargado</option>
+                    <option className="text-slate-900 dark:text-slate-100 font-normal" value="VIAJE_FINALIZADO">Viaje Finalizado</option>
+                  </optgroup>
                 </select>
               </div>
 
