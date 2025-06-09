@@ -6,6 +6,5 @@ export function setLogoutCallback(callback: () => void) {
 
 export function performLogout() {
   if (logoutCallback) logoutCallback();
-  // Redirigir al login
   window.location.href = "/login";
 }
