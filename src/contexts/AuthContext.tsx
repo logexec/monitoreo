@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
 import { getUser } from "@/lib/auth";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Loading from "@/components/Loading";
 import Cookies from "js-cookie";
 import { setLogoutCallback } from "@/lib/authHanlder";
@@ -70,12 +70,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isLoading && !user && location.pathname !== "/login") {
       navigate("/login");
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, location.pathname]);
 
   if (isLoading) {
     return <Loading text="Cargando..." />;
