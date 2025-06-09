@@ -2,6 +2,7 @@
 import { User } from "@/types/database";
 import axios from "axios";
 import Cookies from "js-cookie";
+import { performLogout } from "./authHanlder";
 
 const sanctumCsrfUrl = import.meta.env.VITE_SANCTUM_CSRF_URL;
 
@@ -10,7 +11,7 @@ axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 axios.defaults.withCredentials = true; // Se envían las cookies en cada petición
 
 /**
- * Cache global 
+ * Cache global
  */
 const tripUpdateCache: {
   data: any;
@@ -199,3 +200,13 @@ export const getUsers = async (): Promise<User[]> => {
 };
 
 export default axios;
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      performLogout();
+    }
+    return Promise.reject(error);
+  }
+);

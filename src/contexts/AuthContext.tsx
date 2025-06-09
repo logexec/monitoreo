@@ -4,6 +4,7 @@ import { getUser } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import Loading from "@/components/Loading";
 import Cookies from "js-cookie";
+import { setLogoutCallback } from "@/lib/authHanlder";
 
 interface AuthContextType {
   user: { name: string; email: string; isAdmin: boolean } | null;
@@ -51,6 +52,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
     fetchUser();
+  }, []);
+
+  useEffect(() => {
+    setLogoutCallback(() => {
+      setUser(null);
+    });
   }, []);
 
   return (
