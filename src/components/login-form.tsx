@@ -26,13 +26,8 @@ export function LoginForm({
     setLoading(true);
 
     try {
-      // Paso 1: Obtener el token CSRF
       await getCSRFToken();
-
-      // Paso 2: Realizar el login
       const response = await axios.post(`/login`, formData);
-
-      // Se guarda el usuario en el contexto
       setUser(response.data.user);
       toast.success(
         `¡Hola, ${
@@ -42,8 +37,29 @@ export function LoginForm({
       navigate("/");
     } catch (error: any) {
       if (error.response) {
-        toast.error(error.response.data.message);
+        const status = error.response.status;
+        const message = error.response.data.message || "";
+
+        if (status === 401) {
+          // Si el backend manda un mensaje claro, úsalo para distinguir error de credenciales vs expiración
+          if (
+            message.toLowerCase().includes("credenciales") ||
+            message.toLowerCase().includes("incorrecto") ||
+            message.toLowerCase().includes("no autorizado")
+          ) {
+            toast.error("Usuario o contraseña incorrectos.");
+          } else {
+            // Aquí puedes decidir no mostrar toast o mostrar otro mensaje
+            toast.error(
+              "La sesión ha expirado. Por favor, vuelve a identificarte."
+            );
+          }
+        } else {
+          toast.error(message || "Error inesperado, intenta nuevamente.");
+        }
         console.error("Error login:", error.response.data);
+      } else {
+        toast.error("No se pudo conectar con el servidor.");
       }
     } finally {
       setLoading(false);
