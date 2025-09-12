@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios from "./axios";
 import { toast } from "sonner";
+import api from "./axios";
 
 export async function getUser() {
   try {
-    const response = await axios.get(`/me`);
+    const response = await api.get(`/me`);
     return response.data;
   } catch (error: any) {
     if (

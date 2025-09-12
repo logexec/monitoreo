@@ -3,14 +3,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import axios from "axios";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getCSRFToken } from "@/lib/axios";
+import api from "@/lib/axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-
-axios.defaults.withCredentials = true;
 
 export function LoginForm({
   className,
@@ -26,8 +23,7 @@ export function LoginForm({
     setLoading(true);
 
     try {
-      await getCSRFToken();
-      const response = await axios.post(`/login`, formData);
+      const response = await api.post(`/login`, formData);
       setUser(response.data.user);
       toast.success(
         `¡Hola, ${
@@ -36,12 +32,11 @@ export function LoginForm({
       );
       navigate("/");
     } catch (error: any) {
-      if (error.response) {
+      if (error?.response) {
         const status = error.response.status;
-        const message = error.response.data.message || "";
+        const message = error.response.data?.message || "";
 
         if (status === 401) {
-          // Si el backend manda un mensaje claro, úsalo para distinguir error de credenciales vs expiración
           if (
             message.toLowerCase().includes("credenciales") ||
             message.toLowerCase().includes("incorrecto") ||
@@ -49,7 +44,6 @@ export function LoginForm({
           ) {
             toast.error("Usuario o contraseña incorrectos.");
           } else {
-            // Aquí puedes decidir no mostrar toast o mostrar otro mensaje
             toast.error(
               "La sesión ha expirado. Por favor, vuelve a identificarte."
             );
@@ -67,8 +61,8 @@ export function LoginForm({
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
+    setFormData((prev) => ({
+      ...prev,
       [event.target.name]: event.target.value,
     }));
   };
@@ -99,15 +93,6 @@ export function LoginForm({
           />
         </div>
         <div className="grid gap-2">
-          {/* <div className="flex items-center">
-            <Label htmlFor="password">Contraseña</Label>
-            <a
-              href="#"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
-            >
-              ¿Olvidaste tu contraseña?
-            </a>
-          </div> */}
           <Input
             id="password"
             type="password"
@@ -122,12 +107,6 @@ export function LoginForm({
           {loading ? "Iniciando sesión..." : "Identificarse"}
         </Button>
       </div>
-      {/* <div className="text-center text-sm">
-        ¿No tienes una cuenta?{" "}
-        <a href="#" className="underline underline-offset-4">
-          Regístrate
-        </a>
-      </div> */}
     </form>
   );
 }

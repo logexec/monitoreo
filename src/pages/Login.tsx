@@ -5,7 +5,7 @@ import logo from "../assets/logex_logo.png";
 export default function LoginPage() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
-      <div className="relative hidden bg-slate-950 bg-muted lg:flex h-full w-full">
+      <div className="relative hidden bg-slate-950 lg:flex h-full w-full">
         <div className="hidden lg:flex lg:flex-col items-center justify-center text-white dark:text-black absolute inset-0">
           <h1 className="font-semibold text-4xl flex flex-row items-center gap-0 -mb-20 dark:text-slate-200">
             Torre de Control{" "}

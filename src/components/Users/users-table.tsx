@@ -1,6 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useMemo, useState } from "react";
+import api from "@/lib/axios";
 import {
   UserPlus,
   Save,
@@ -34,9 +34,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getCSRFToken } from "@/lib/axios";
 import CopyToClipboardAlert from "./CopyToClipboardAlert";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import axios from "axios";
 
 interface User {
   id: number;
@@ -54,11 +54,11 @@ const UserManagement: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<User | null>(null);
   const [notification, setNotification] = useState<{
-    type: string;
+    type: "error" | "success";
     message: string;
   } | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [errors, setErrors] = useState<string | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const { filters, setFilters } = useGlobalFilters();
 
@@ -67,35 +67,41 @@ const UserManagement: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => {
-        setNotification(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
+    if (!notification) return;
+    const t = setTimeout(() => setNotification(null), 3000);
+    return () => clearTimeout(t);
   }, [notification]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("/users");
-      setUsers(response.data);
-    } catch (error) {
+      const { data } = await api.get<User[]>("/users");
+      if (Array.isArray(data)) {
+        setUsers(data);
+      } else {
+        console.error("Expected users array, got:", data);
+        setUsers([]);
+        setNotification({
+          type: "error",
+          message: "Respuesta inesperada del servidor.",
+        });
+      }
+    } catch (error: unknown) {
       console.error(error);
-      showNotification("error", "Error al cargar operadores");
+      setNotification({ type: "error", message: "Error al cargar operadores" });
     } finally {
       setLoading(false);
     }
   };
 
-  const showNotification = (type: string, message: string) => {
+  const showNotification = (type: "error" | "success", message: string) => {
     setNotification({ type, message });
   };
 
   const handleAddDialogOpen = () => {
     setName("");
     setEmail("");
-    setFilters((prev) => ({ ...prev, password: "" })); // Inicializar password
+    setFilters((prev: any) => ({ ...prev, password: "" }));
     setIsAddDialogOpen(true);
   };
 
@@ -110,28 +116,26 @@ const UserManagement: React.FC = () => {
       showNotification("error", "Nombre, email y contraseña son requeridos");
       return;
     }
-
     setSubmitting(true);
     try {
-      await getCSRFToken();
-      await axios.post("/users", {
-        name,
-        email,
-        password: filters.password,
-      });
-      fetchUsers();
+      await api.post("/users", { name, email, password: filters.password });
+      await fetchUsers();
       setName("");
       setEmail("");
-      setFilters((prev) => ({ ...prev, password: "" }));
+      setFilters((prev: any) => ({ ...prev, password: "" }));
       setIsAddDialogOpen(false);
       showNotification("success", "Operador añadido correctamente");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
       if (axios.isAxiosError(error) && error.response) {
-        console.error("Error response:", error.response.data);
-        setErrors(error.response.data.message || "Error en la solicitud");
+        setErrors(
+          (typeof error.response.data === "object" &&
+            error.response.data &&
+            "message" in error.response.data &&
+            String((error.response.data as { message?: unknown }).message)) ||
+            "Error en la solicitud"
+        );
       } else {
-        console.error("Error desconocido:", error);
         setErrors(error instanceof Error ? error.message : "Error inesperado");
       }
       showNotification("error", "Error al añadir operador");
@@ -146,17 +150,15 @@ const UserManagement: React.FC = () => {
       showNotification("error", "Nombre y email son requeridos");
       return;
     }
-
     setSubmitting(true);
     try {
-      await getCSRFToken();
-      await axios.put(`/users/${editingUser.id}`, { name, email });
-      fetchUsers();
+      await api.put(`/users/${editingUser.id}`, { name, email });
+      await fetchUsers();
       setName("");
       setEmail("");
       setEditingUser(null);
       showNotification("success", "Operador actualizado correctamente");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
       showNotification("error", "Error al actualizar operador");
     } finally {
@@ -166,15 +168,13 @@ const UserManagement: React.FC = () => {
 
   const deleteUser = async () => {
     if (!deleteConfirmUser) return;
-
     setSubmitting(true);
     try {
-      await getCSRFToken();
-      await axios.delete(`/users/${deleteConfirmUser.id}`);
-      fetchUsers();
+      await api.delete(`/users/${deleteConfirmUser.id}`);
+      await fetchUsers();
       setDeleteConfirmUser(null);
       showNotification("success", "Operador eliminado correctamente");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
       showNotification("error", "Error al eliminar operador");
     } finally {
@@ -182,13 +182,13 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const filteredUsers = React.useMemo(() => {
+  const filteredUsers = useMemo(() => {
     if (!searchTerm) return users;
     const term = searchTerm.toLowerCase();
     return users.filter(
-      (user) =>
-        user.name.toLowerCase().includes(term) ||
-        user.email.toLowerCase().includes(term)
+      (u) =>
+        u.name.toLowerCase().includes(term) ||
+        u.email.toLowerCase().includes(term)
     );
   }, [users, searchTerm]);
 
@@ -272,7 +272,7 @@ const UserManagement: React.FC = () => {
               </span>
             </div>
           ) : (
-            <div className="rounded-md border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="rounded-md border border-slate-2 00 dark:border-slate-800 overflow-hidden">
               <div className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                 <div className="bg-slate-50 dark:bg-slate-950">
                   <div className="grid grid-cols-12 px-6 py-3">
@@ -312,7 +312,7 @@ const UserManagement: React.FC = () => {
                     </div>
                   ) : (
                     <>
-                      {filteredUsers.map((user) => (
+                      {filteredUsers.map((user: any) => (
                         <div
                           key={user.id}
                           className="grid grid-cols-12 px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors duration-150"
@@ -364,7 +364,7 @@ const UserManagement: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Diálogo para añadir usuario */}
+      {/* Add User Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -420,9 +420,9 @@ const UserManagement: React.FC = () => {
                 id="password"
                 type="password"
                 value={filters.password || ""}
-                onChange={(e) => {
-                  setFilters((prev) => ({ ...prev, password: e.target.value }));
-                }}
+                onChange={(e) =>
+                  setFilters((prev: any) => ({ ...prev, password: e.target.value }))
+                }
                 className="w-full border-slate-300 dark:border-slate-700 focus:border-slate-500 focus:ring-slate-500"
               />
               {errors && <span className="text-red-700">{errors}</span>}
@@ -458,7 +458,7 @@ const UserManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo para editar usuario */}
+      {/* Edit User Dialog */}
       <Dialog
         open={!!editingUser}
         onOpenChange={(open) => !open && setEditingUser(null)}
@@ -533,7 +533,7 @@ const UserManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de confirmación para eliminar */}
+      {/* Delete confirmation */}
       <AlertDialog
         open={!!deleteConfirmUser}
         onOpenChange={(open) => !open && setDeleteConfirmUser(null)}

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import axios from "axios";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -22,6 +21,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { ProjectMultiSelect } from "./ProjectMultiSelect";
+import api from "@/lib/axios";
 
 // Color palette for project lines
 const COLOR_PALETTE = [
@@ -133,8 +133,9 @@ export function ChartAreaInteractive() {
   // Set default period for mobile
   React.useEffect(() => {
     if (isMobile && filters.period !== "last_7_days") {
-      setFilters((prev) => ({ ...prev, period: "last_7_days" }));
+      setFilters((prev: any) => ({ ...prev, period: "last_7_days" }));
     }
+    //eslint-disable-next-line
   }, [isMobile, setFilters]);
 
   const [chartConfig, setChartConfig] = React.useState<{
@@ -234,7 +235,7 @@ export function ChartAreaInteractive() {
         const isProjectMode = filters.destinations.length > 0;
 
         if (isProjectMode) {
-          const res = await axios.get("/dashboardTrips", {
+          const res = await api.get("/dashboardTrips", {
             params: {
               period: "last_3_months",
               destination: filters.destinations,
@@ -269,7 +270,7 @@ export function ChartAreaInteractive() {
             setError("Formato de datos inesperado");
           }
         } else {
-          const res = await axios.get("/dashboardTrips", {
+          const res = await api.get("/dashboardTrips", {
             params: {
               period: "last_3_months",
               project: filters.projects.length ? filters.projects : undefined,
@@ -278,7 +279,7 @@ export function ChartAreaInteractive() {
           });
 
           if (Array.isArray(res.data)) {
-            const projectRes = await axios.get("/dashboardTrips", {
+            const projectRes = await api.get("/dashboardTrips", {
               params: {
                 period: "last_3_months",
                 destination: filters.destinations.length
@@ -318,7 +319,7 @@ export function ChartAreaInteractive() {
                     details: item.details,
                   };
 
-                  const projectBreakdown = await axios.get("/dashboardTrips", {
+                  const projectBreakdown = await api.get("/dashboardTrips", {
                     params: {
                       period: "last_3_months",
                       destination: [item.destination],
@@ -369,6 +370,7 @@ export function ChartAreaInteractive() {
       }
     };
     fetchData();
+    //eslint-disable-next-line
   }, [filters.projects, filters.destinations]);
 
   // Update chartData when period changes (no fetch)
@@ -398,7 +400,7 @@ export function ChartAreaInteractive() {
               options={filterOptions.projectOptions}
               selected={filters.projects}
               onChange={(selected) =>
-                setFilters((prev) => ({ ...prev, projects: selected }))
+                setFilters((prev: any) => ({ ...prev, projects: selected }))
               }
             />
             <ProjectMultiSelect
@@ -406,15 +408,15 @@ export function ChartAreaInteractive() {
               options={filterOptions.destinationOptions}
               selected={filters.destinations}
               onChange={(selected) =>
-                setFilters((prev) => ({ ...prev, destinations: selected }))
+                setFilters((prev: any) => ({ ...prev, destinations: selected }))
               }
             />
           </div>
           <ToggleGroup
             type="single"
             value={filters.period}
-            onValueChange={(value) =>
-              value && setFilters((prev) => ({ ...prev, period: value }))
+            onValueChange={(value: any) =>
+              value && setFilters((prev: any) => ({ ...prev, period: value }))
             }
             variant="outline"
             className="@[767px]/card:flex hidden"
@@ -434,8 +436,8 @@ export function ChartAreaInteractive() {
           </ToggleGroup>
           <Select
             value={filters.period}
-            onValueChange={(value) =>
-              setFilters((prev) => ({ ...prev, period: value }))
+            onValueChange={(value: any) =>
+              setFilters((prev: any) => ({ ...prev, period: value }))
             }
           >
             <SelectTrigger

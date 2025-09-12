@@ -1,133 +1,171 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { User } from "@/types/database";
-import axios from "axios";
-import Cookies from "js-cookie";
-import { performLogout } from "./authHanlder";
+import axios, {
+  AxiosHeaders,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
+import type { User } from "@/types/database";
 
-const sanctumCsrfUrl = import.meta.env.VITE_SANCTUM_CSRF_URL;
+/** ---------- ENV & URL HELPERS ---------- */
+const API_URL = import.meta.env.VITE_API_URL as string; // e.g. https://api.example.com/api
+if (!API_URL) {
+  throw new Error("VITE_API_URL must be defined");
+}
 
-// Configuración global de Axios
-axios.defaults.baseURL = import.meta.env.VITE_API_URL;
-axios.defaults.withCredentials = true; // Se envían las cookies en cada petición
+const SANCTUM_CSRF_URL: string =
+  (import.meta.env.VITE_SANCTUM_CSRF_URL as string | undefined) ??
+  new URL("/sanctum/csrf-cookie", new URL(API_URL).origin).toString();
 
-/**
- * Cache global
- */
-const tripUpdateCache: {
-  data: any;
+/** ---------- AXIOS INSTANCE ---------- */
+export const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
+});
+
+/** ---------- CSRF INITIALIZATION (ONCE PER PAGE LOAD) ---------- */
+let csrfInitialized = false;
+let csrfPromise: Promise<void> | null = null;
+
+const ensureCsrfCookie = (): Promise<void> => {
+  if (csrfInitialized) return Promise.resolve();
+  if (csrfPromise) return csrfPromise;
+
+  csrfPromise = api
+    .get<void>(SANCTUM_CSRF_URL, {
+      baseURL: undefined, // absolute to API origin, no `/api` prefix
+      withCredentials: true,
+    })
+    .then(() => {
+      csrfInitialized = true;
+    })
+    .finally(() => {
+      csrfPromise = null;
+    });
+
+  return csrfPromise;
+};
+
+/** Public helper you can await at app boot or before unsafe calls */
+export const ensureCsrfReady = async (): Promise<void> => {
+  await ensureCsrfCookie();
+};
+
+const isUnsafeMethod = (method?: string): boolean => {
+  const m = (method ?? "get").toUpperCase();
+  return m === "POST" || m === "PUT" || m === "PATCH" || m === "DELETE";
+};
+
+/** ---------- INTERCEPTORS ---------- */
+api.interceptors.request.use(
+  async (
+    config: InternalAxiosRequestConfig
+  ): Promise<InternalAxiosRequestConfig> => {
+    if (!config.headers) config.headers = new AxiosHeaders();
+    config.withCredentials = true;
+
+    if (isUnsafeMethod(config.method)) {
+      await ensureCsrfCookie();
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// NOTE: intentionally NO 401 auto-logout interceptor.
+// Handle 401s explicitly where you call APIs (e.g., getUser, guarded screens).
+
+/** ---------- PUBLIC CSRF HELPER (compat) ---------- */
+export const getCSRFToken = async (): Promise<void> => {
+  await ensureCsrfCookie();
+};
+
+/** ---------- DOMAIN TYPES ---------- */
+export type CreateTripInput = {
+  delivery_date: Date;
+  driver_name: string;
+  driver_document: string;
+  driver_phone: string;
+  origin: string;
+  destination: string;
+  project: string;
+  property_type: string;
+  plate_number: string;
+  shift?: string;
+  uri_gps?: string;
+  usuario?: string;
+  clave?: string;
+  gps_provider?: string;
+  current_status?: string;
+  current_status_update?: string;
+};
+
+type TripUpdatesParams = {
+  trip_id?: string;
+  qty?: string;
+};
+
+/** ---------- SIMPLE IN-MEMORY CACHE ---------- */
+type TripUpdateCache = {
+  data: unknown;
   timestamp: number;
   trip_id?: string;
   quantity?: string;
-} = {
-  data: null,
-  timestamp: 0,
 };
 
-const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutos
+const tripUpdateCache: TripUpdateCache = { data: null, timestamp: 0 };
+const CACHE_DURATION_MS = 5 * 60 * 1000;
 
-/**
- * Obtiene la cookie CSRF y actualiza el header X-XSRF-TOKEN en Axios.
- */
-export const getCSRFToken = async () => {
-  try {
-    // Esta llamada establece la cookie XSRF-TOKEN y la cookie de sesión
-    await axios.get(sanctumCsrfUrl, { withCredentials: true });
-    const xsrfToken = Cookies.get("XSRF-TOKEN");
-    axios.defaults.headers.common["X-XSRF-TOKEN"] = xsrfToken;
-  } catch (error) {
-    console.error("Error al obtener el token CSRF:", error);
-    throw error;
-  }
-};
-
-export async function getTrips(date?: string, projects = "all") {
-  // date = new Date().toISOString().slice(0, 10),
-  try {
-    await getCSRFToken();
-    const response = await axios.get("/trips", {
-      params: { date, projects },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Error al obtener trips:", error);
-    throw error;
-  }
+/** ---------- API CALLS ---------- */
+export async function getTrips(
+  date?: string,
+  projects: string = "all"
+): Promise<unknown> {
+  const response = await api.get<unknown>("/trips", {
+    params: { date, projects },
+  });
+  return response.data;
 }
 
-export async function getTripUpdates(trip_id?: string, quantity?: string) {
+export async function getTripUpdates(
+  trip_id?: string,
+  quantity?: string
+): Promise<unknown> {
   const now = Date.now();
-
-  // Condición para reutilizar caché
   const isSameRequest =
     tripUpdateCache.trip_id === trip_id &&
     tripUpdateCache.quantity === quantity;
-
   const isCacheValid = now - tripUpdateCache.timestamp < CACHE_DURATION_MS;
 
-  if (isSameRequest && isCacheValid && tripUpdateCache.data) {
-    console.log("Usando datos en caché de trip updates");
+  if (isSameRequest && isCacheValid && tripUpdateCache.data !== null) {
     return tripUpdateCache.data;
   }
 
-  try {
-    const response = await axios.get(`/trip-updates?qty=${quantity}`, {
-      params: { trip_id },
-    });
+  const params: TripUpdatesParams = { trip_id, qty: quantity };
+  const response = await api.get<unknown>("/trip-updates", { params });
 
-    // Guardar en caché
-    tripUpdateCache.data = response.data;
-    tripUpdateCache.timestamp = now;
-    tripUpdateCache.trip_id = trip_id;
-    tripUpdateCache.quantity = quantity;
+  tripUpdateCache.data = response.data;
+  tripUpdateCache.timestamp = now;
+  tripUpdateCache.trip_id = trip_id;
+  tripUpdateCache.quantity = quantity;
 
-    return response.data;
-  } catch (error) {
-    console.error("Error al obtener las actualizaciones:", error);
-    throw error;
-  }
+  return response.data;
 }
 
-export async function getTripUpdatesImage(token: string) {
-  try {
-    // await getCSRFToken();
-    const response = await axios.get(`/images/${token}`);
-    console.log("Respuesta:", response);
-    console.log("Imagen obtenida:", response.data);
-    return response;
-  } catch (error) {
-    console.error("Error al obtener los archivos:", error);
-    throw error;
-  }
+export async function getTripUpdatesImage(
+  token: string
+): Promise<AxiosResponse<unknown>> {
+  const response = await api.get<unknown>(
+    `/images/${encodeURIComponent(token)}`
+  );
+  return response;
 }
 
 export async function addTrips(
-  trips: Array<{
-    delivery_date: Date;
-    driver_name: string;
-    driver_document: string;
-    driver_phone: string;
-    origin: string;
-    destination: string;
-    project: string;
-    property_type: string;
-    plate_number: string;
-    shift?: string;
-    uri_gps?: string;
-    usuario?: string;
-    clave?: string;
-    gps_provider?: string;
-    current_status?: string;
-    current_status_update?: string;
-  }>
-) {
-  try {
-    await getCSRFToken();
-    const response = await axios.post("/trips", { trips });
-    return response.data;
-  } catch (error) {
-    console.error("Error al crear viajes:", error);
-    throw error;
-  }
+  trips: ReadonlyArray<CreateTripInput>
+): Promise<unknown> {
+  const response = await api.post<unknown>("/trips", { trips });
+  return response.data;
 }
 
 export async function updateTrip(
@@ -135,78 +173,43 @@ export async function updateTrip(
   category: string,
   notes: string,
   image?: File
-) {
+): Promise<unknown> {
+  const formData = new FormData();
+  formData.append("trip_id", tripId);
+  formData.append("category", category);
+  formData.append("notes", notes);
+  if (image) formData.append("image", image);
+
   try {
-    await getCSRFToken();
-    const formData = new FormData();
-    formData.append("trip_id", tripId);
-    formData.append("category", category);
-    formData.append("notes", notes);
-    if (image) {
-      formData.append("image", image);
-    }
-    const response = await axios.post("/trip-updates", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data", // Necesario para enviar FormData
-      },
+    const response = await api.post<unknown>("/trip-updates", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;
-  } catch (error) {
-    // Verificar si es un error de Axios con respuesta
-    if (axios.isAxiosError(error) && error.response) {
-      const errorMessage =
-        error.response.data.message ||
-        "Error desconocido al actualizar el viaje";
-      console.error("Error al actualizar el viaje:", errorMessage, error);
-      // Lanzar un nuevo error con el mensaje específico
-      throw new Error(errorMessage);
-    } else {
-      // Otros tipos de errores (p.ej., problemas de red)
-      console.error("Error al actualizar el viaje:", error);
-      throw new Error("No se pudo conectar con el servidor");
+  } catch (unknownError: unknown) {
+    if (axios.isAxiosError(unknownError) && unknownError.response) {
+      const data = unknownError.response.data as unknown;
+      const message =
+        typeof data === "object" && data !== null && "message" in data
+          ? String((data as { message?: unknown }).message ?? "")
+          : "Error desconocido al actualizar el viaje";
+      throw new Error(message);
     }
+    throw new Error("No se pudo conectar con el servidor");
   }
 }
 
-export async function getPlateNumbers() {
-  try {
-    await getCSRFToken();
-    const response = await axios.get("/plate-numbers");
-    return response.data;
-  } catch (error) {
-    console.error("Error al obtener los números de placa:", error);
-    throw error;
-  }
+export async function getPlateNumbers(): Promise<unknown> {
+  const response = await api.get<unknown>("/plate-numbers");
+  return response.data;
 }
 
-export async function logout() {
-  try {
-    await getCSRFToken();
-    await axios.post("/logout");
-  } catch (error) {
-    console.error("Error al cerrar sesión:", error);
-  }
+export async function logout(): Promise<void> {
+  await api.post<unknown>("/logout");
 }
 
 export const getUsers = async (): Promise<User[]> => {
-  try {
-    await getCSRFToken();
-    const response = axios.get("/users");
-    return (await response).data;
-  } catch (error) {
-    console.error("Error al obtener los usuarios:", error);
-    throw new Error("No fue posible obtener los usuarios");
-  }
+  const response = await api.get<User[]>("/users");
+  return response.data;
 };
 
-export default axios;
-
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      performLogout();
-    }
-    return Promise.reject(error);
-  }
-);
+export default api;
