@@ -1,4 +1,4 @@
-import { parse, format } from 'date-fns';
+import { parse } from 'date-fns';
 
 export function parseLatinAmericanDate(dateStr: string): string {
   try {
@@ -6,6 +6,7 @@ export function parseLatinAmericanDate(dateStr: string): string {
     const date = parse(dateStr, 'dd/MM/yyyy', new Date());
     return date.toISOString();
   } catch (error) {
+    console.error(error);
     throw new Error(`Invalid date format. Expected DD/MM/YYYY, got: ${dateStr}`);
   }
 }
