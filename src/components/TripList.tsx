@@ -349,11 +349,17 @@ export function TripList() {
   }, [trips, now]);
 
   // Custom filter function for multi-column searching
-  const multiColumnFilterFn: FilterFn<Trip> = (row, _columnId, filterValue) => {
-    const searchableRowContent =
-      `${row.original.gps_devices[0].device_id} ${row.original.plate_number}`.toLowerCase();
-    const searchTerm = (filterValue ?? "").toLowerCase();
-    return searchableRowContent.includes(searchTerm);
+  const multiColumnFilterFn: FilterFn<Trip> = (row, _columnId, value) => {
+    const plate = String(row.original.plate_number);
+    // device_id puede faltar o venir vacío
+    const devId = String(row.original?.gps_devices?.[0]?.device_id ?? "");
+    // string a buscar
+    const haystack = `${devId} ${plate}`.toLowerCase();
+    const needle = String(value ?? "")
+      .toLowerCase()
+      .trim();
+    if (needle === "") return true; // sin término => no filtra
+    return haystack.includes(needle);
   };
 
   const projectFilterFn: FilterFn<Trip> = (
