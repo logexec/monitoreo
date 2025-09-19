@@ -72,6 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       try {
+        // 👇 NUEVO: garantiza cookies antes de consultar /me
+        await ensureCsrfReady();
+
         const u = await getUser(); // must use the `api` instance internally
         const isAdmin =
           u.email === "jk@logex.ec" ||

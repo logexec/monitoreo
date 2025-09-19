@@ -6,7 +6,7 @@ import axios, {
 import type { User } from "@/types/database";
 
 /** ---------- ENV & URL HELPERS ---------- */
-const API_URL = import.meta.env.VITE_API_URL as string; // e.g. https://api.example.com/api
+const API_URL = import.meta.env.VITE_API_URL as string; // e.g. https://monitoreo.logex.com.ec/api
 if (!API_URL) {
   throw new Error("VITE_API_URL must be defined");
 }
@@ -87,12 +87,22 @@ api.interceptors.request.use(
     const isAuthEndpoint =
       pathOnly.endsWith("/login") || pathOnly.endsWith("/logout");
 
-    // Ensure CSRF before unsafe methods; force-refresh on auth endpoints
+    // 1) Garantiza CSRF en métodos no seguros o endpoints de auth
     if (isUnsafeMethod(config.method)) {
       await ensureCsrfCookie(isAuthEndpoint);
     }
 
-    // Manually set X-XSRF-TOKEN so we aren't relying on axios' auto-behavior
+    // 2) 👇 NUEVO: si aún no hay cookie de sesión, fuerza CSRF también en GET
+    const hasSession = !!getCookie("monitoreo_backend_session");
+    const isCsrfEndpoint =
+      typeof config.url === "string" &&
+      (config.url.endsWith("/sanctum/csrf-cookie") ||
+        config.url.includes("/sanctum/csrf-cookie"));
+    if (!hasSession && !isCsrfEndpoint) {
+      await ensureCsrfCookie(false);
+    }
+
+    // 3) Setea X-XSRF-TOKEN manualmente
     const xsrf = getCookie("XSRF-TOKEN");
     if (xsrf) {
       (config.headers as AxiosHeaders).set("X-XSRF-TOKEN", xsrf);
