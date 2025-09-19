@@ -460,8 +460,7 @@ export function TripList() {
             <>
               {trip.gps_devices.length ? (
                 <div
-                  className="px-1 whitespace-nowrap text-sm font-bold cursor-pointer"
-                  onClick={() => setSelectedTrip(trip)}
+                  className="px-1 whitespace-nowrap text-sm font-medium"
                 >
                   {trip.gps_devices.map((device) => (
                     <div className="flex flex-col" key={device.device_id}>
