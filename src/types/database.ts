@@ -22,6 +22,7 @@ export interface GPSDevices {
   uri_gps: string;
   user: string;
   password: string;
+  device_id: number;
 }
 
 export interface Trip {

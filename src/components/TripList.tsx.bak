@@ -1,14 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import React, {
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  RefObject,
-} from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -17,17 +10,14 @@ import {
   flexRender,
   ColumnDef,
   FilterFn,
-  ColumnFiltersState,
-  Table as TableType,
 } from "@tanstack/react-table";
 import {
+  Search,
+  X,
   ChevronUp,
   ChevronDown,
   Trash2,
   ChevronRight,
-  CircleXIcon,
-  ListFilterIcon,
-  FilterIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -37,36 +27,18 @@ import {
   UpdateCategory,
 } from "../types/database";
 import { TripUpdatePanel } from "./TripUpdatePanel";
+import { StatusFilter } from "./StatusFilter";
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
 import { getTrips } from "@/lib/axios";
 import Loading from "./Loading";
 import CustomSwitch from "./ui/CustomSwitch";
 import { useLocation } from "react-router-dom";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
-// import { ProjectMultiSelect } from "./ProjectMultiSelect";
+import { ProjectMultiSelect } from "./ProjectMultiSelect";
 import { StatusBadge } from "./StatusBadge";
 import { StatusOption } from "./StatusOption";
 import { statusLabels } from "@/constants/statusMappings";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
-import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Checkbox } from "./ui/checkbox";
-import { Label } from "./ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 // Función auxiliar para formatear fechas
 const formatDate = (dateStr: string | null): string => {
@@ -132,55 +104,6 @@ const globalFilterFn: FilterFn<Trip> = (row, _, filterValue) => {
   return searchText.includes(normalizedFilterValue);
 };
 
-const FilterComponent = ({
-  columnName,
-  inputRef,
-  filterText,
-  table,
-}: {
-  columnName: string;
-  inputRef: RefObject<HTMLInputElement | null>;
-  filterText: string;
-  table: TableType<Trip>;
-}) => {
-  return (
-    <div className="relative">
-      <Input
-        id={`${columnName}-input`}
-        ref={inputRef}
-        className={cn(
-          "peer min-w-64 ps-9",
-          Boolean(table.getColumn(columnName)?.getFilterValue()) && "pe-9"
-        )}
-        value={(table.getColumn(columnName)?.getFilterValue() ?? "") as string}
-        onChange={(e) =>
-          table.getColumn(columnName)?.setFilterValue(e.target.value)
-        }
-        placeholder={`Filtrar por ${filterText}...`}
-        type="text"
-        aria-label={`Filtrar por ${filterText}`}
-      />
-      <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50">
-        <ListFilterIcon size={16} aria-hidden="true" />
-      </div>
-      {Boolean(table.getColumn(columnName)?.getFilterValue()) && (
-        <button
-          className="text-muted-foreground/80 hover:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md transition-[color,box-shadow] outline-none focus:z-10 focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Clear filter"
-          onClick={() => {
-            table.getColumn(columnName)?.setFilterValue("");
-            if (inputRef.current) {
-              inputRef.current.focus();
-            }
-          }}
-        >
-          <CircleXIcon size={16} aria-hidden="true" />
-        </button>
-      )}
-    </div>
-  );
-};
-
 export function TripList() {
   const [isLoading, setIsLoading] = useState(true);
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -194,12 +117,8 @@ export function TripList() {
   const { projects, search, status, selectedValue } = filters;
   const location = useLocation();
 
-  // const uniqueProjects = [...new Set(trips.map((t) => t.project))].sort();
-  // const projectOptions = uniqueProjects.map((p) => ({ value: p, label: p }));
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const routeInputRef = useRef<HTMLInputElement>(null);
-  const categoryInputRef = useRef<HTMLInputElement>(null);
+  const uniqueProjects = [...new Set(trips.map((t) => t.project))].sort();
+  const projectOptions = uniqueProjects.map((p) => ({ value: p, label: p }));
 
   // Actualizar el tiempo cada segundo
   useEffect(() => {
@@ -226,7 +145,7 @@ export function TripList() {
           selectedValue === "on"
             ? new Date().toISOString().slice(0, 10)
             : undefined;
-        const response: any = await getTrips(dateParam);
+        const response = await getTrips(dateParam);
         setTrips(
           response.map((trip: Trip) => ({
             ...trip,
@@ -348,38 +267,6 @@ export function TripList() {
     });
   }, [trips, now]);
 
-  // Custom filter function for multi-column searching
-  const multiColumnFilterFn: FilterFn<Trip> = (row, _columnId, filterValue) => {
-    const searchableRowContent =
-      `${row.original.gps_devices[0].device_id} ${row.original.plate_number}`.toLowerCase();
-    const searchTerm = (filterValue ?? "").toLowerCase();
-    return searchableRowContent.includes(searchTerm);
-  };
-
-  const projectFilterFn: FilterFn<Trip> = (
-    row,
-    columnId,
-    filterValue: string[]
-  ) => {
-    if (!filterValue?.length) return true;
-    const status = row.getValue(columnId) as string;
-    return filterValue.includes(status);
-  };
-
-  const routeFilterFn: FilterFn<Trip> = (row, _columnId, filterValue) => {
-    const searchableRowContent =
-      `${row.original.origin} ${row.original.destination}`.toLowerCase();
-    const searchTerm = (filterValue ?? "").toLowerCase();
-    return searchableRowContent.includes(searchTerm);
-  };
-
-  const categoryFilterFn: FilterFn<Trip> = (row, _columnId, filterValue) => {
-    const searchableRowContent =
-      `${row.original.current_status_update}`.toLowerCase();
-    const searchTerm = (filterValue ?? "").toLowerCase();
-    return searchableRowContent.includes(searchTerm);
-  };
-
   // Definición de columnas para TanStack Table
   const columns = useMemo<ColumnDef<Trip>[]>(
     () => [
@@ -441,38 +328,6 @@ export function TripList() {
             </div>
           );
         },
-        filterFn: multiColumnFilterFn,
-      },
-      {
-        id: "device_id",
-        header: "ID Geotab",
-        enableSorting: true,
-        sortingFn: "alphanumeric",
-        cell: ({ row }) => {
-          const trip = row.original;
-          return (
-            <>
-              {trip.gps_devices.length ? (
-                <div
-                  className="px-1 whitespace-nowrap text-sm font-bold cursor-pointer"
-                  onClick={() => setSelectedTrip(trip)}
-                >
-                  {trip.gps_devices.map((device) => (
-                    <div className="flex flex-col" key={device.device_id}>
-                      <div className="grid grid-cols-[auto_auto] gap-1 text-xs">
-                        <span>id: </span>
-                        <span>{device.device_id}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-muted-foreground">N/A</span>
-              )}
-            </>
-          );
-        },
-        filterFn: multiColumnFilterFn,
       },
       // Fecha
       {
@@ -562,35 +417,47 @@ export function TripList() {
                 <div className="flex flex-row text-xs space-x-1">
                   <span className="font-light">Origen:</span>
                   <span className="max-w-[20ch] truncate font-medium">
-                    {trip.origin && trip.origin?.length > 15 ? (
-                      <TooltipProvider delayDuration={100}>
-                        <Tooltip>
-                          <TooltipTrigger className="max-w-[20ch] truncate font-medium">
-                            {trip.origin}
-                          </TooltipTrigger>
-                          <TooltipContent>{trip.origin}</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
-                      <span>{trip.origin || "—"}</span>
-                    )}
+                    {
+                      trip.origin && trip.origin?.length > 15 ? (
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger className="max-w-[20ch] truncate font-medium">
+                              {trip.origin}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {trip.origin}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <span>
+                        {trip.origin || "—"}
+                        </span>
+                      )
+                    }
                   </span>
                 </div>
                 <div className="flex flex-row text-xs space-x-1">
                   <span className="font-light">Destino:</span>
                   <span className="max-w-[20ch] truncate font-medium">
-                    {trip.destination && trip.destination?.length > 15 ? (
-                      <TooltipProvider delayDuration={100}>
-                        <Tooltip>
-                          <TooltipTrigger className="max-w-[20ch] truncate font-medium">
-                            {trip.destination}
-                          </TooltipTrigger>
-                          <TooltipContent>{trip.destination}</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
-                      <span>{trip.destination || "—"}</span>
-                    )}
+                    {
+                      trip.destination && trip.destination?.length > 15 ? (
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger className="max-w-[20ch] truncate font-medium">
+                              {trip.destination}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {trip.destination}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <span>
+                        {trip.destination || "—"}
+                        </span>
+                      )
+                    }
                   </span>
                 </div>
                 <div className="flex flex-row text-xs space-x-1">
@@ -603,7 +470,6 @@ export function TripList() {
             </div>
           );
         },
-        filterFn: routeFilterFn,
       },
       // Proyecto
       {
@@ -616,7 +482,6 @@ export function TripList() {
             {row.original.project}
           </div>
         ),
-        filterFn: projectFilterFn,
       },
       // Estado
       {
@@ -664,7 +529,6 @@ export function TripList() {
             </div>
           );
         },
-        filterFn: categoryFilterFn,
       },
       // GPS
       {
@@ -793,20 +657,14 @@ export function TripList() {
   const table = useReactTable({
     data: enrichedTrips,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
-    enableSorting: true,
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
     state: {
       globalFilter: search,
       rowSelection: Object.fromEntries(
         Array.from(selectedTrips).map((id) => [id, true])
       ),
       sorting: sorting, // Usar el estado de ordenamiento
-      columnFilters,
     },
+    enableSorting: true, // Habilitar ordenamiento a nivel de tabla
     enableRowSelection: true,
     getRowId: (row) => row.id,
     onRowSelectionChange: (updater) => {
@@ -821,56 +679,12 @@ export function TripList() {
 
       setSelectedTrips(new Set(selectedIds));
     },
+    onSortingChange: setSorting, // Manejar cambios de ordenamiento
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     globalFilterFn,
   });
-
-  // Get unique project values
-  const uniqueProjectsValues = useMemo(() => {
-    const project = table.getColumn("project");
-
-    if (!project) return [];
-
-    const values = Array.from(project.getFacetedUniqueValues().keys());
-
-    return values.sort();
-    //eslint-disable-next-line
-  }, [table.getColumn("project")?.getFacetedUniqueValues(), table]);
-
-  // Get counts for each status
-  const projectCounts = useMemo(() => {
-    const projectColumn = table.getColumn("project");
-    if (!projectColumn) return new Map();
-    return projectColumn.getFacetedUniqueValues();
-    //eslint-disable-next-line
-  }, [table.getColumn("project")?.getFacetedUniqueValues()]);
-
-  const selectedProjects = useMemo(() => {
-    const filterValue = table
-      .getColumn("project")
-      ?.getFilterValue() as string[];
-    return filterValue ?? [];
-    //eslint-disable-next-line
-  }, [table.getColumn("project")?.getFilterValue()]);
-
-  const handleProjectChange = (checked: boolean, value: string) => {
-    const filterValue = table
-      .getColumn("project")
-      ?.getFilterValue() as string[];
-    const newFilterValue = filterValue ? [...filterValue] : [];
-
-    if (checked) {
-      newFilterValue.push(value);
-    } else {
-      const index = newFilterValue.indexOf(value);
-      if (index > -1) {
-        newFilterValue.splice(index, 1);
-      }
-    }
-
-    table
-      .getColumn("project")
-      ?.setFilterValue(newFilterValue.length ? newFilterValue : undefined);
-  };
 
   // Filtrado por proyecto
   const projectFilteredRows = table.getFilteredRowModel().rows.filter((row) => {
@@ -948,6 +762,31 @@ export function TripList() {
     <div className="space-y-4 py-5 px-2 mx-auto">
       {/* Filter Section */}
       <div className="flex gap-4">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600" />
+            <input
+              type="text"
+              placeholder={`Buscar viajes... (${trips.length})`}
+              className="pl-10 pr-10 py-2 w-full border rounded-lg dark:bg-black"
+              value={search}
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, search: e.target.value }))
+              }
+            />
+            {search && (
+              <button
+                onClick={() => setFilters((f) => ({ ...f, search: "" }))}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <CustomSwitch />
+        </div>
         {selectedTrips.size > 0 && (
           <button
             onClick={() => setShowDeleteModal(true)}
@@ -957,296 +796,185 @@ export function TripList() {
             Eliminar ({selectedTrips.size})
           </button>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            {/* Filter by plate or device_id */}
-            <FilterComponent
-              columnName="plate_number"
-              filterText="placa o id de dispositivo"
-              inputRef={inputRef}
-              table={table}
-            />
-
-            {/* Filter by origin or destination */}
-            <FilterComponent
-              columnName="route"
-              filterText="origen o destino"
-              inputRef={routeInputRef}
-              table={table}
-            />
-
-            {/* Filter by category */}
-            <FilterComponent
-              columnName="category"
-              filterText="novedad"
-              inputRef={categoryInputRef}
-              table={table}
-            />
-
-            {/* Filter by project */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline">
-                  <FilterIcon
-                    className="-ms-1 opacity-60"
-                    size={16}
-                    aria-hidden="true"
-                  />
-                  Proyecto
-                  {selectedProjects.length > 0 && (
-                    <span className="bg-background text-muted-foreground/70 -me-1 inline-flex h-5 max-h-full items-center rounded border px-1 font-[inherit] text-[0.625rem] font-medium">
-                      {selectedProjects.length}
-                    </span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto min-w-36 p-3" align="start">
-                <div className="space-y-3">
-                  <div className="text-muted-foreground text-xs font-medium">
-                    Filtros
-                  </div>
-                  <div className="space-y-3">
-                    {uniqueProjectsValues.map((value, i) => (
-                      <div key={value} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`project-${i}`}
-                          checked={selectedProjects.includes(value)}
-                          onCheckedChange={(checked: boolean) =>
-                            handleProjectChange(checked, value)
-                          }
-                        />
-                        <Label
-                          htmlFor={`project-${i}`}
-                          className="flex grow justify-between gap-2 font-normal"
-                        >
-                          {value}{" "}
-                          <span className="text-muted-foreground ms-2 text-xs">
-                            {projectCounts.get(value)}
-                          </span>
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <CustomSwitch />
-        </div>
+        {/* <div className="relative">
+          <ProjectMultiSelect
+            options={projectOptions}
+            selected={filters.projects}
+            onChange={(arr) => setFilters((f) => ({ ...f, projects: arr }))}
+          />
+        </div> */}
+        <StatusFilter
+          value={status}
+          onChange={(v) => setFilters((f) => ({ ...f, status: v }))}
+        />
       </div>
 
       {/* Table Section */}
-      <div className="border rounded">
-        <div className="[&>div]:max-h-[810px]">
-          <Table className="[&_td]:border-border [&_th]:border-border border-separate border-spacing-0 [&_tfoot_td]:border-t [&_th]:border-b [&_tr]:border-none [&_tr:not(:last-child)_td]:border-b">
-            <TableHeader className="bg-background/90 sticky top-0 z-10 backdrop-blur-xs">
-              <TableRow className="hover:bg-transparent">
-                {table.getFlatHeaders().map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="relative h-10 border-t select-none last:[&>.cursor-col-resize]:opacity-0"
-                    aria-sort={
-                      header.column.getIsSorted() === "asc"
-                        ? "ascending"
-                        : header.column.getIsSorted() === "desc"
-                        ? "descending"
-                        : "none"
-                    }
-                    {...{
-                      colSpan: header.colSpan,
-                      style: {
-                        width: header.getSize(),
-                      },
-                    }}
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div
-                        className={cn(
-                          header.column.getCanSort() &&
-                            "flex h-full cursor-pointer items-center justify-between gap-2 select-none"
-                        )}
-                        onClick={header.column.getToggleSortingHandler()}
-                        onKeyDown={(e) => {
-                          // Enhanced keyboard handling for sorting
-                          if (
-                            header.column.getCanSort() &&
-                            (e.key === "Enter" || e.key === " ")
-                          ) {
-                            e.preventDefault();
-                            header.column.getToggleSortingHandler()?.(e);
-                          }
-                        }}
-                        tabIndex={header.column.getCanSort() ? 0 : undefined}
-                      >
-                        <span className="truncate">
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+      <div className="bg-white dark:bg-black rounded-lg shadow-sm overflow-x-auto relative max-h-[calc(100vh-150px)] max-w-[calc(100vw-150px)]">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+          <thead className="bg-gray-800">
+            <tr>
+              {table.getFlatHeaders().map((header) => (
+                <th
+                  key={header.id}
+                  className="sticky top-0 bg-gray-800 z-10 px-6 py-3 text-left"
+                  onClick={header.column.getToggleSortingHandler()}
+                >
+                  {header.isPlaceholder ? null : (
+                    <div className="flex items-center text-sm font-medium text-gray-100">
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {header.column.getCanSort() && (
+                        <span className="ml-1">
+                          {{
+                            asc: <ChevronUp className="h-4 w-4" />,
+                            desc: <ChevronDown className="h-4 w-4" />,
+                          }[header.column.getIsSorted() as string] ?? null}
                         </span>
-                        {{
-                          asc: (
-                            <ChevronUp
-                              className="shrink-0 opacity-60"
-                              size={16}
-                              aria-hidden="true"
-                            />
-                          ),
-                          desc: (
-                            <ChevronDown
-                              className="shrink-0 opacity-60"
-                              size={16}
-                              aria-hidden="true"
-                            />
-                          ),
-                        }[header.column.getIsSorted() as string] ?? null}
-                      </div>
-                    )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedRows.length > 0 ? (
-                sortedRows.map((row) => {
-                  const trip = row.original as Trip & {
-                    minutesSinceUpdate?: number;
-                    secondsSinceUpdate?: number;
-                  };
+                      )}
+                    </div>
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-800">
+            {sortedRows.length > 0 ? (
+              sortedRows.map((row) => {
+                const trip = row.original as Trip & {
+                  minutesSinceUpdate?: number;
+                  secondsSinceUpdate?: number;
+                };
 
-                  return (
-                    <React.Fragment key={row.id}>
-                      <TableRow
-                        className={`transition-colors duration-500 bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-950 ${getRowClassName(
-                          row
-                        )}`}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell
-                            key={cell.id}
-                            className="whitespace-nowrap"
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
+                return (
+                  <React.Fragment key={row.id}>
+                    <tr
+                      className={`transition-colors duration-500 bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-950 ${getRowClassName(
+                        row
+                      )}`}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="whitespace-nowrap">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
 
-                      {/* Expanded Row Content - Versión mejorada */}
-                      {expandedTrips.has(trip.id) && (
-                        <TableRow>
-                          <TableCell
-                            colSpan={table.getAllColumns().length}
-                            className={`px-0 py-0 ${
-                              (trip.minutesSinceUpdate || 0) >= 20
-                                ? "bg-red-50 dark:bg-red-950/50 dark:border-y-4 dark:border-x-2 dark:border-red-950"
-                                : "bg-gray-50 dark:bg-gray-900"
-                            }`}
-                          >
-                            {trip.updates && trip.updates.length > 0 ? (
-                              <div className="p-4 transition-all duration-300 ease-in-out">
-                                <div className="flex items-center justify-between mb-3">
-                                  <h4
-                                    className={`font-semibold text-sm ${
-                                      (trip.minutesSinceUpdate || 0) >= 20
-                                        ? "text-red-700 dark:text-red-400"
-                                        : "text-gray-700 dark:text-gray-300"
+                    {/* Expanded Row Content - Versión mejorada */}
+                    {expandedTrips.has(trip.id) && (
+                      <tr>
+                        <td
+                          colSpan={table.getAllColumns().length}
+                          className={`px-0 py-0 ${
+                            (trip.minutesSinceUpdate || 0) >= 20
+                              ? "bg-red-50 dark:bg-red-950 dark:border-y-4 dark:border-x-2 dark:border-red-900"
+                              : "bg-gray-50 dark:bg-gray-900"
+                          }`}
+                        >
+                          {trip.updates && trip.updates.length > 0 ? (
+                            <div className="p-4 transition-all duration-300 ease-in-out">
+                              <div className="flex items-center justify-between mb-3">
+                                <h4
+                                  className={`font-semibold text-sm ${
+                                    (trip.minutesSinceUpdate || 0) >= 20
+                                      ? "text-red-700 dark:text-red-400"
+                                      : "text-gray-700 dark:text-gray-300"
+                                  }`}
+                                >
+                                  Historial de Actualizaciones (
+                                  {trip.updates.length})
+                                </h4>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  Mostrando todas las actualizaciones ordenadas
+                                  por fecha
+                                </div>
+                              </div>
+
+                              <div className="space-y-1 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                {trip.updates.map((update, index) => (
+                                  <div
+                                    key={update.id}
+                                    className={`p-3 rounded-lg transition-colors ${
+                                      index === 0
+                                        ? "bg-blue-50 border-l-4 border-blue-500 dark:bg-indigo-900 dark:border-blue-400"
+                                        : "bg-white hover:bg-gray-50 dark:bg-indigo-800 dark:hover:bg-indigo-800/60"
+                                    } ${
+                                      index % 2 === 0
+                                        ? "dark:bg-indigo-800/40"
+                                        : "dark:bg-indigo-800/20"
                                     }`}
                                   >
-                                    Historial de Actualizaciones (
-                                    {trip.updates.length})
-                                  </h4>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                                    Mostrando todas las actualizaciones
-                                    ordenadas por fecha
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                                  {trip.updates.map((update, index) => (
-                                    <div
-                                      key={update.id}
-                                      className={`p-3 rounded-lg transition-colors ${
-                                        index === 0
-                                          ? "bg-blue-50 border-l-4 border-blue-500 dark:bg-indigo-900 dark:border-blue-400"
-                                          : "bg-white hover:bg-gray-50 dark:bg-indigo-800 dark:hover:bg-indigo-800/60"
-                                      } ${
-                                        index % 2 === 0
-                                          ? "dark:bg-indigo-800/40"
-                                          : "dark:bg-indigo-800/20"
-                                      }`}
-                                    >
-                                      <div className="flex justify-between items-start gap-x-2">
-                                        <div className="flex-1">
-                                          <div className="flex items-center gap-2">
-                                            <StatusBadge
-                                              category={update.category}
-                                            />
-                                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                              {update.notes || "Sin detalles"}
-                                            </span>
-                                          </div>
-                                        </div>
-                                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-200 whitespace-nowrap">
-                                          <span className="hidden sm:inline mr-1">
-                                            Actualizado:
-                                          </span>
-                                          {formatDate(update.created_at)}
-                                          <span className="ml-1 text-xs">
-                                            {new Date(
-                                              update.created_at
-                                            ).toLocaleTimeString("es-EC", {
-                                              hour: "2-digit",
-                                              minute: "2-digit",
-                                            })}
+                                    <div className="flex justify-between items-start gap-x-2">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <StatusBadge
+                                            category={update.category}
+                                          />
+                                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                            {update.notes || "Sin detalles"}
                                           </span>
                                         </div>
                                       </div>
-
-                                      {update.image_url && (
-                                        <div className="mt-2">
-                                          <img
-                                            src={update.image_url}
-                                            alt="Imagen de actualización"
-                                            className="h-20 rounded border border-gray-200 dark:border-gray-700"
-                                          />
-                                        </div>
-                                      )}
+                                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-200 whitespace-nowrap">
+                                        <span className="hidden sm:inline mr-1">
+                                          Actualizado:
+                                        </span>
+                                        {formatDate(update.created_at)}
+                                        <span className="ml-1 text-xs">
+                                          {new Date(
+                                            update.created_at
+                                          ).toLocaleTimeString("es-EC", {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          })}
+                                        </span>
+                                      </div>
                                     </div>
-                                  ))}
-                                </div>
+
+                                    {update.image_url && (
+                                      <div className="mt-2">
+                                        <img
+                                          src={update.image_url}
+                                          alt="Imagen de actualización"
+                                          className="h-20 rounded border border-gray-200 dark:border-gray-700"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
-                            ) : (
-                              <div className="py-6 text-center">
-                                <span className="inline-block py-3 px-4 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm">
-                                  No hay actualizaciones disponibles para este
-                                  viaje
-                                </span>
-                              </div>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </React.Fragment>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td
-                    colSpan={table.getAllColumns().length}
-                    className="p-4 text-center text-gray-300 dark:text-gray-600"
-                  >
-                    No se encontraron viajes con este filtro
-                  </td>
-                </tr>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                            </div>
+                          ) : (
+                            <div className="py-6 text-center">
+                              <span className="inline-block py-3 px-4 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm">
+                                No hay actualizaciones disponibles para este
+                                viaje
+                              </span>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })
+            ) : (
+              <tr>
+                <td
+                  colSpan={table.getAllColumns().length}
+                  className="p-4 text-center text-gray-300 dark:text-gray-600"
+                >
+                  No se encontraron viajes con este filtro
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Delete Modal */}

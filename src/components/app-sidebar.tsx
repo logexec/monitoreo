@@ -15,11 +15,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { NavDashboard } from "./nav-dashboard";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
 
-  if (isLoading || !user) return null; // No renderiza nada hasta obtener los datos
-
-  const items = user.isAdmin
+  const items = user!.isAdmin
     ? [
         {
           title: "Administración",
@@ -82,7 +80,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={items} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavUser user={user!} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

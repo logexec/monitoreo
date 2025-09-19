@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   // Optional: if you want a global loader until ready, uncomment:
-  // if (!ready) return <Loading text="Cargando..." />;
+  if (!ready) return <Loading text="Cargando..." />;
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -118,6 +118,6 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     //eslint-disable-next-line
   }, [user, isLoading, ready, navigate, location.pathname]);
 
-  if (!ready || isLoading) return <Loading text="Cargando..." />;
+  if (!ready || isLoading) return <Loading />;
   return <>{children}</>;
 }

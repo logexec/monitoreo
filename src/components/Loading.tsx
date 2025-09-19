@@ -1,4 +1,3 @@
-import React from "react";
 import compact_logo from "../assets/logo_compact.png";
 
 interface LoaderProps {

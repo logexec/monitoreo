@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import { AddPage } from "./pages/AddPage";
 import { UploadPage } from "./pages/UploadPage";
 import { TripList } from "./components/TripList";
 import { UpdatesPage } from "./pages/UpdatesPage";
@@ -38,7 +37,6 @@ export function App() {
 
             {/* Viajes */}
             <Route path="trips" element={<TripList />} />
-            <Route path="new-trip" element={<AddPage />} />
             <Route path="upload" element={<UploadPage />} />
             <Route path="updates" element={<UpdatesPage />} />
 

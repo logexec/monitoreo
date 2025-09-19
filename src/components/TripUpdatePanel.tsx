@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState } from "react";
 import { X, Upload } from "lucide-react";
 import { Trip, TripUpdate, UpdateCategory } from "../types/database";
-import { updateCategoryLabels } from "../constants/updateCategories";
 import { motion } from "motion/react";
 import { updateTrip } from "@/lib/axios";
 import { toast } from "sonner";
@@ -31,6 +29,7 @@ export function TripUpdatePanel({
   const [completed, setCompleted] = useState(false);
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  //eslint-disable-next-line
   const [_open, setOpen] = useState(false);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {

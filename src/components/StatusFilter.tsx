@@ -12,11 +12,11 @@ export function StatusFilter({ value, onChange }: StatusFilterProps) {
     <div className="relative">
       <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-600 h-4 w-4" />
       <select
-        className="pl-10 pr-4 py-2 border rounded-lg appearance-none bg-white dark:bg-black min-w-[200px]"
+        className="pl-10 pr-3 py-2 border rounded-lg appearance-none bg-white dark:bg-black w-max"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
-        <option value="all">Todos los Estados</option>
+        <option value="all">Novedades</option>
         {Object.entries(updateCategoryLabels).map(([value, label]) => (
           <option key={value} value={value}>
             {label}

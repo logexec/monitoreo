@@ -27,33 +27,51 @@ export const api = axios.create({
 let csrfInitialized = false;
 let csrfPromise: Promise<void> | null = null;
 
-const ensureCsrfCookie = (): Promise<void> => {
-  if (csrfInitialized) return Promise.resolve();
-  if (csrfPromise) return csrfPromise;
-
-  csrfPromise = api
+const fetchCsrf = (): Promise<void> =>
+  api
     .get<void>(SANCTUM_CSRF_URL, {
       baseURL: undefined, // absolute to API origin, no `/api` prefix
       withCredentials: true,
     })
     .then(() => {
       csrfInitialized = true;
-    })
-    .finally(() => {
-      csrfPromise = null;
     });
 
+const ensureCsrfCookie = (force: boolean = false): Promise<void> => {
+  if (force) {
+    // Force a new CSRF cookie (useful for login/logout after session rotation)
+    return fetchCsrf();
+  }
+  if (csrfInitialized) return Promise.resolve();
+  if (csrfPromise) return csrfPromise;
+  csrfPromise = fetchCsrf().finally(() => {
+    csrfPromise = null;
+  });
   return csrfPromise;
 };
 
 /** Public helper you can await at app boot or before unsafe calls */
-export const ensureCsrfReady = async (): Promise<void> => {
-  await ensureCsrfCookie();
+export const ensureCsrfReady = async (
+  force: boolean = false
+): Promise<void> => {
+  await ensureCsrfCookie(force);
 };
 
 const isUnsafeMethod = (method?: string): boolean => {
   const m = (method ?? "get").toUpperCase();
   return m === "POST" || m === "PUT" || m === "PATCH" || m === "DELETE";
+};
+
+const getCookie = (name: string): string | null => {
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${name}=`));
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match.split("=").slice(1).join("="));
+  } catch {
+    return null;
+  }
 };
 
 /** ---------- INTERCEPTORS ---------- */
@@ -64,9 +82,22 @@ api.interceptors.request.use(
     if (!config.headers) config.headers = new AxiosHeaders();
     config.withCredentials = true;
 
+    const urlStr = String(config.url ?? "");
+    const pathOnly = urlStr.split("?")[0];
+    const isAuthEndpoint =
+      pathOnly.endsWith("/login") || pathOnly.endsWith("/logout");
+
+    // Ensure CSRF before unsafe methods; force-refresh on auth endpoints
     if (isUnsafeMethod(config.method)) {
-      await ensureCsrfCookie();
+      await ensureCsrfCookie(isAuthEndpoint);
     }
+
+    // Manually set X-XSRF-TOKEN so we aren't relying on axios' auto-behavior
+    const xsrf = getCookie("XSRF-TOKEN");
+    if (xsrf) {
+      (config.headers as AxiosHeaders).set("X-XSRF-TOKEN", xsrf);
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -204,7 +235,8 @@ export async function getPlateNumbers(): Promise<unknown> {
 }
 
 export async function logout(): Promise<void> {
-  await api.post<unknown>("/logout");
+  await ensureCsrfCookie(true); // force refresh just before logout
+  await api.post<unknown>("/logout"); // now the header matches the cookie
 }
 
 export const getUsers = async (): Promise<User[]> => {
