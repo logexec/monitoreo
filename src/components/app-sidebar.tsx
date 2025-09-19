@@ -17,7 +17,13 @@ import { NavDashboard } from "./nav-dashboard";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
 
-  const items = user!.isAdmin
+  // Mientras no haya usuario (aún cargando o no autenticado)
+  if (!user) {
+    return;
+  }
+
+  // Con usuario ya disponible, arma items según rol/admin
+  const items = user.isAdmin
     ? [
         {
           title: "Administración",
@@ -33,8 +39,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           isActive: true,
           items: [
             { title: "Lista de viajes", url: "/trips" },
-            // { title: "Nuevo viaje", url: "/new-trip" },
-            // { title: "Cargar viajes (Excel)", url: "/upload" },
             { title: "Historial", url: "/updates" },
           ],
         },
@@ -54,8 +58,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           isActive: true,
           items: [
             { title: "Lista de viajes", url: "/trips" },
-            // { title: "Nuevo viaje", url: "/new-trip" },
-            // { title: "Cargar viajes (Excel)", url: "/upload" },
             { title: "Historial", url: "/updates" },
           ],
         },
@@ -80,7 +82,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={items} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user!} />
+        {/* Ahora sí, con user presente */}
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
