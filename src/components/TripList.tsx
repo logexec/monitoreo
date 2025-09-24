@@ -14,6 +14,8 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   flexRender,
   ColumnDef,
   FilterFn,
@@ -191,7 +193,7 @@ export function TripList() {
   const [now, setNow] = useState(Date.now());
 
   const { filters, setFilters } = useGlobalFilters();
-  const { projects, search, status, selectedValue } = filters;
+  const { search, status, selectedValue } = filters;
   const location = useLocation();
 
   // const uniqueProjects = [...new Set(trips.map((t) => t.project))].sort();
@@ -368,8 +370,8 @@ export function TripList() {
     filterValue: string[]
   ) => {
     if (!filterValue?.length) return true;
-    const status = row.getValue(columnId) as string;
-    return filterValue.includes(status);
+    const project = row.getValue(columnId) as string;
+    return filterValue.includes(project);
   };
 
   const routeFilterFn: FilterFn<Trip> = (row, _columnId, filterValue) => {
@@ -379,12 +381,12 @@ export function TripList() {
     return searchableRowContent.includes(searchTerm);
   };
 
-  const categoryFilterFn: FilterFn<Trip> = (row, _columnId, filterValue) => {
-    const searchableRowContent =
-      `${row.original.current_status_update}`.toLowerCase();
-    const searchTerm = (filterValue ?? "").toLowerCase();
-    return searchableRowContent.includes(searchTerm);
-  };
+  // const categoryFilterFn: FilterFn<Trip> = (row, _columnId, filterValue) => {
+  //   const searchableRowContent =
+  //     `${row.original.current_status_update}`.toLowerCase();
+  //   const searchTerm = (filterValue ?? "").toLowerCase();
+  //   return searchableRowContent.includes(searchTerm);
+  // };
 
   // Definición de columnas para TanStack Table
   const columns = useMemo<ColumnDef<Trip>[]>(
@@ -459,9 +461,7 @@ export function TripList() {
           return (
             <>
               {trip.gps_devices.length ? (
-                <div
-                  className="px-1 whitespace-nowrap text-sm font-medium"
-                >
+                <div className="px-1 whitespace-nowrap text-sm font-medium">
                   {trip.gps_devices.map((device) => (
                     <div className="flex flex-col" key={device.device_id}>
                       <div className="grid grid-cols-[auto_auto] gap-1 text-xs">
@@ -649,7 +649,7 @@ export function TripList() {
       {
         id: "category",
         header: "Novedad",
-        accessorKey: "updates[0].category",
+        accessorFn: (row) => row.updates?.[0]?.category ?? "",
         enableSorting: true,
         sortingFn: (rowA, rowB) => {
           const categoryA = rowA.original.updates?.[0]?.category || "";
@@ -669,7 +669,11 @@ export function TripList() {
             </div>
           );
         },
-        filterFn: categoryFilterFn,
+        filterFn: (row, colId, filterValue) => {
+          const value = String(row.getValue(colId) ?? "").toLowerCase();
+          const needle = String(filterValue ?? "").toLowerCase();
+          return value.includes(needle);
+        },
       },
       // GPS
       {
@@ -804,6 +808,8 @@ export function TripList() {
     enableSorting: true,
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     state: {
       globalFilter: search,
       rowSelection: Object.fromEntries(
@@ -831,31 +837,26 @@ export function TripList() {
 
   // Get unique project values
   const uniqueProjectsValues = useMemo(() => {
-    const project = table.getColumn("project");
+    const set = new Set<string>();
+    for (const t of enrichedTrips) {
+      if (t.project) set.add(t.project);
+    }
+    return Array.from(set).sort();
+  }, [enrichedTrips]);
 
-    if (!project) return [];
-
-    const values = Array.from(project.getFacetedUniqueValues().keys());
-
-    return values.sort();
-    //eslint-disable-next-line
-  }, [table.getColumn("project")?.getFacetedUniqueValues(), table]);
-
-  // Get counts for each status
   const projectCounts = useMemo(() => {
-    const projectColumn = table.getColumn("project");
-    if (!projectColumn) return new Map();
-    return projectColumn.getFacetedUniqueValues();
-    //eslint-disable-next-line
-  }, [table.getColumn("project")?.getFacetedUniqueValues()]);
+    const counts = new Map<string, number>();
+    for (const t of enrichedTrips) {
+      if (!t.project) continue;
+      counts.set(t.project, (counts.get(t.project) ?? 0) + 1);
+    }
+    return counts;
+  }, [enrichedTrips]);
 
   const selectedProjects = useMemo(() => {
-    const filterValue = table
-      .getColumn("project")
-      ?.getFilterValue() as string[];
-    return filterValue ?? [];
-    //eslint-disable-next-line
-  }, [table.getColumn("project")?.getFilterValue()]);
+    const entry = columnFilters.find((f) => f.id === "project");
+    return (entry?.value as string[]) ?? [];
+  }, [columnFilters]);
 
   const handleProjectChange = (checked: boolean, value: string) => {
     const filterValue = table
@@ -878,13 +879,7 @@ export function TripList() {
   };
 
   // Filtrado por proyecto
-  const projectFilteredRows = table.getFilteredRowModel().rows.filter((row) => {
-    const trip = row.original;
-    return projects.length === 0 || projects.includes(trip.project);
-  });
-
-  // Filtrado por estado
-  const filteredRows = projectFilteredRows.filter((row) => {
+  const filteredRows = table.getFilteredRowModel().rows.filter((row) => {
     const trip = row.original;
     return status === "all" || trip.updates?.[0]?.category === status;
   });
@@ -1019,6 +1014,7 @@ export function TripList() {
                           onCheckedChange={(checked: boolean) =>
                             handleProjectChange(checked, value)
                           }
+                          className="border-slate-300 data-[state=checked]:bg-slate-500 data-[state=checked]:text-white"
                         />
                         <Label
                           htmlFor={`project-${i}`}

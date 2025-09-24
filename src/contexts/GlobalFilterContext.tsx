@@ -1,6 +1,6 @@
+import api from "@/lib/axios";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
-import axios from "axios";
 
 export type GlobalFilters = {
   // Para el dashboard
@@ -78,7 +78,7 @@ export const GlobalFilterProvider: React.FC<{ children: React.ReactNode }> = ({
       setFilterOptions((prev) => ({ ...prev, isLoading: true }));
       try {
         // Cargar proyectos
-        const projectsRes = await axios.get("/tripProjects");
+        const projectsRes = await api.get("/tripProjects");
         if (Array.isArray(projectsRes.data)) {
           const projectOptions = projectsRes.data.map((project: string) => ({
             label: project,
@@ -88,7 +88,7 @@ export const GlobalFilterProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         // Cargar destinos
-        const destinationsRes = await axios.get("/tripDestinations");
+        const destinationsRes = await api.get("/tripDestinations");
         if (Array.isArray(destinationsRes.data)) {
           const destinationOptions = destinationsRes.data.map(
             (destination: string) => ({
